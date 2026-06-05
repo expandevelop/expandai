@@ -6,6 +6,7 @@ import {
   RecordStatus,
   UserRole,
 } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOperatorOnboardingDto } from './dto/create-operator-onboarding.dto';
 import { CreatePartnerOnboardingDto } from './dto/create-partner-onboarding.dto';
@@ -16,12 +17,14 @@ export class OnboardingService {
 
   async createOperator(payload: CreateOperatorOnboardingDto) {
     await this.ensureEmailAndDocumentAvailability(payload.email, payload.document);
+    const passwordHash = await bcrypt.hash(payload.password, 10);
 
     const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const user = await tx.user.create({
         data: {
           name: payload.companyName,
           email: payload.email,
+          passwordHash,
           role: UserRole.OPERATOR,
           status: RecordStatus.PENDING,
           ecosystemProfile: 'operator',
@@ -65,12 +68,14 @@ export class OnboardingService {
 
   async createPartner(payload: CreatePartnerOnboardingDto) {
     await this.ensureEmailAndDocumentAvailability(payload.email, payload.document);
+    const passwordHash = await bcrypt.hash(payload.password, 10);
 
     const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const user = await tx.user.create({
         data: {
           name: payload.contactName ?? payload.companyName,
           email: payload.email,
+          passwordHash,
           role: UserRole.PARTNER,
           status: RecordStatus.PENDING,
           ecosystemProfile: 'partner',

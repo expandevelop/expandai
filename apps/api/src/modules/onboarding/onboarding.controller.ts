@@ -1,10 +1,13 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CreateOperatorOnboardingDto } from './dto/create-operator-onboarding.dto';
 import { CreatePartnerOnboardingDto } from './dto/create-partner-onboarding.dto';
 import { OnboardingService } from './onboarding.service';
 
 @ApiTags('Onboarding')
+@Roles(UserRole.ADMIN)
 @Controller({
   path: 'onboarding',
   version: '1',

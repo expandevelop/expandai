@@ -36,17 +36,49 @@ enum OnboardingStatus {
   REJECTED
 }
 
+enum BillingStatus {
+  DRAFT
+  PENDING
+  PAYMENT_CONFIRMED
+  OVERDUE
+  CANCELED
+}
+
+enum SplitStatus {
+  PENDING
+  CALCULATED
+  RELEASED
+  BLOCKED
+}
+
+enum OpportunityStage {
+  NEW
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum SaleStatus {
+  DRAFT
+  PENDING_BILLING
+  BILLED
+  PAYMENT_CONFIRMED
+  CANCELED
+}
+
 model User {
-  id               String      @id @default(cuid())
+  id               String        @id @default(cuid())
   name             String
-  email            String      @unique
+  email            String        @unique
   passwordHash     String?
   role             UserRole
-  status           RecordStatus @default(PENDING)
+  status           RecordStatus  @default(PENDING)
   ecosystemProfile String?
   phone            String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   operator         Operator?
   partner          Partner?
@@ -54,54 +86,64 @@ model User {
 }
 
 model Operator {
-  id                 String       @id @default(cuid())
-  userId             String       @unique
+  id                 String           @id @default(cuid())
+  userId             String           @unique
   legalName          String
   tradeName          String?
-  document           String       @unique
+  document           String           @unique
   email              String
   phone              String?
   website            String?
-  status             RecordStatus @default(PENDING)
+  status             RecordStatus     @default(PENDING)
   commissionModel    String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  user               User         @relation(fields: [userId], references: [id])
+  user               User             @relation(fields: [userId], references: [id])
   productCatalogs    ProductCatalog[]
   onboardings        Onboarding[]
+  commercialRules    CommercialRule[]
+  billingRecords     BillingRecord[]
+  opportunities      Opportunity[]
+  sales              Sale[]
 }
 
 model Partner {
-  id                 String       @id @default(cuid())
-  userId             String       @unique
-  document           String       @unique
+  id                 String           @id @default(cuid())
+  userId             String           @unique
+  document           String           @unique
   companyName        String?
-  partnerLevel       String       @default("ENTRY")
-  score              Decimal      @default(0)
-  status             RecordStatus @default(PENDING)
+  partnerLevel       String           @default("ENTRY")
+  score              Decimal          @default(0)
+  status             RecordStatus     @default(PENDING)
   city               String?
   state              String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  user               User         @relation(fields: [userId], references: [id])
+  user               User             @relation(fields: [userId], references: [id])
   onboardings        Onboarding[]
+  billingRecords     BillingRecord[]
+  opportunities      Opportunity[]
+  sales              Sale[]
 }
 
 model Client {
-  id                 String       @id @default(cuid())
-  userId             String       @unique
+  id                 String           @id @default(cuid())
+  userId             String           @unique
   companyName        String
-  document           String       @unique
+  document           String           @unique
   email              String
   phone              String?
-  status             RecordStatus @default(PENDING)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  status             RecordStatus     @default(PENDING)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  user               User         @relation(fields: [userId], references: [id])
+  user               User             @relation(fields: [userId], references: [id])
   onboardings        Onboarding[]
+  billingRecords     BillingRecord[]
+  opportunities      Opportunity[]
+  sales              Sale[]
 }
 
 model Onboarding {
@@ -121,15 +163,129 @@ model Onboarding {
 }
 
 model ProductCatalog {
-  id                 String       @id @default(cuid())
+  id                 String           @id @default(cuid())
   operatorId         String
   name               String
   description        String?
   category           String?
   commissionRule     String?
-  status             RecordStatus @default(PENDING)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  status             RecordStatus     @default(PENDING)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  operator           Operator     @relation(fields: [operatorId], references: [id])
+  operator           Operator         @relation(fields: [operatorId], references: [id])
+  commercialRule     CommercialRule?
+  billingRecords     BillingRecord[]
+  opportunities      Opportunity[]
+  sales              Sale[]
+}
+
+model CommercialRule {
+  id                 String           @id @default(cuid())
+  productCatalogId   String           @unique
+  operatorId         String
+  operatorPercentage Decimal          @default(0)
+  partnerPercentage  Decimal          @default(0)
+  platformPercentage Decimal          @default(0)
+  notes              String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  productCatalog     ProductCatalog   @relation(fields: [productCatalogId], references: [id])
+  operator           Operator         @relation(fields: [operatorId], references: [id])
+  billingRecords     BillingRecord[]
+  sales              Sale[]
+}
+
+model Opportunity {
+  id                 String           @id @default(cuid())
+  operatorId         String
+  partnerId          String?
+  clientId           String?
+  productCatalogId   String?
+  title              String
+  description        String?
+  source             String?
+  stage              OpportunityStage @default(NEW)
+  estimatedValue     Decimal          @default(0)
+  closeExpectedAt    DateTime?
+  wonAt              DateTime?
+  lostReason         String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  operator           Operator         @relation(fields: [operatorId], references: [id])
+  partner            Partner?         @relation(fields: [partnerId], references: [id])
+  client             Client?          @relation(fields: [clientId], references: [id])
+  productCatalog     ProductCatalog?  @relation(fields: [productCatalogId], references: [id])
+  sale               Sale?
+}
+
+model Sale {
+  id                 String           @id @default(cuid())
+  opportunityId      String?          @unique
+  operatorId         String
+  partnerId          String?
+  clientId           String?
+  productCatalogId   String?
+  commercialRuleId   String?
+  billingRecordId    String?          @unique
+  externalReference  String?
+  title              String
+  description        String?
+  grossAmount        Decimal          @default(0)
+  netAmount          Decimal?
+  status             SaleStatus       @default(DRAFT)
+  closedAt           DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  opportunity        Opportunity?     @relation(fields: [opportunityId], references: [id])
+  operator           Operator         @relation(fields: [operatorId], references: [id])
+  partner            Partner?         @relation(fields: [partnerId], references: [id])
+  client             Client?          @relation(fields: [clientId], references: [id])
+  productCatalog     ProductCatalog?  @relation(fields: [productCatalogId], references: [id])
+  commercialRule     CommercialRule?  @relation(fields: [commercialRuleId], references: [id])
+  billingRecord      BillingRecord?   @relation(fields: [billingRecordId], references: [id])
+}
+
+model BillingRecord {
+  id                 String           @id @default(cuid())
+  commercialRuleId   String?
+  operatorId         String
+  partnerId          String?
+  clientId           String?
+  productCatalogId   String?
+  externalReference  String?
+  description        String
+  grossAmount        Decimal          @default(0)
+  netAmount          Decimal?
+  dueDate            DateTime?
+  paidAt             DateTime?
+  status             BillingStatus    @default(DRAFT)
+  splitStatus        SplitStatus      @default(PENDING)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  commercialRule     CommercialRule?  @relation(fields: [commercialRuleId], references: [id])
+  operator           Operator         @relation(fields: [operatorId], references: [id])
+  partner            Partner?         @relation(fields: [partnerId], references: [id])
+  client             Client?          @relation(fields: [clientId], references: [id])
+  productCatalog     ProductCatalog?  @relation(fields: [productCatalogId], references: [id])
+  splitAllocations   SplitAllocation[]
+  sale               Sale?
+}
+
+model SplitAllocation {
+  id                 String           @id @default(cuid())
+  billingRecordId    String
+  recipientType      String
+  recipientId        String?
+  percentage         Decimal          @default(0)
+  amount             Decimal          @default(0)
+  status             SplitStatus      @default(PENDING)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  billingRecord      BillingRecord    @relation(fields: [billingRecordId], references: [id])
 }

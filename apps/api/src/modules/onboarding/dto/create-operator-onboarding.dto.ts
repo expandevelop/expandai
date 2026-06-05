@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateOperatorOnboardingDto {
   @ApiProperty({ example: 'Operadora Exemplo S.A.' })
@@ -18,4 +18,13 @@ export class CreateOperatorOnboardingDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiProperty({
+    example: 'Expand@123',
+    description: 'Senha inicial de acesso da operadora na plataforma',
+    minLength: 8,
+  })
+  @IsString()
+  @MinLength(8)
+  password!: string;
 }
