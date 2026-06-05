@@ -1,6 +1,7 @@
 import type { AuthSession } from "@/types/expandai";
 
 export const SESSION_STORAGE_KEY = "expandai:web:session";
+export const SESSION_UPDATED_EVENT = "expandai:web:session-updated";
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_EXPANDAI_API_URL ?? "http://34.238.172.151/api/v1";
 
@@ -30,8 +31,18 @@ export function persistSession(session: AuthSession | null) {
 
   if (!session) {
     window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    window.dispatchEvent(
+      new CustomEvent<AuthSession | null>(SESSION_UPDATED_EVENT, {
+        detail: null,
+      }),
+    );
     return;
   }
 
   window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  window.dispatchEvent(
+    new CustomEvent<AuthSession>(SESSION_UPDATED_EVENT, {
+      detail: session,
+    }),
+  );
 }

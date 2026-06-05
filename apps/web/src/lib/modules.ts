@@ -11,6 +11,7 @@ export type DashboardModule = {
   title: string;
   description: string;
   endpoint: string;
+  href: string;
   profiles: string[];
 };
 
@@ -21,6 +22,7 @@ export const dashboardModules: DashboardModule[] = [
     description:
       "Consulta do cadastro mestre das operadoras conectadas ao ecossistema ExpandAI.",
     endpoint: "/operators",
+    href: "/operadoras",
     profiles: ["ADMIN", "OPERATOR"],
   },
   {
@@ -29,6 +31,7 @@ export const dashboardModules: DashboardModule[] = [
     description:
       "Acompanhamento do ecossistema comercial de parceiros e sua atuação na plataforma.",
     endpoint: "/partners",
+    href: "/partners",
     profiles: ["ADMIN", "OPERATOR", "PARTNER"],
   },
   {
@@ -37,6 +40,7 @@ export const dashboardModules: DashboardModule[] = [
     description:
       "Base comercial dos produtos publicados pelas operadoras com regras associadas.",
     endpoint: "/product-catalogs",
+    href: "/catalogo",
     profiles: ["ADMIN", "OPERATOR", "PARTNER"],
   },
   {
@@ -45,6 +49,7 @@ export const dashboardModules: DashboardModule[] = [
     description:
       "Pipeline comercial com visibilidade inicial das oportunidades já persistidas.",
     endpoint: "/opportunities",
+    href: "/oportunidades",
     profiles: ["ADMIN", "OPERATOR", "PARTNER"],
   },
   {
@@ -53,6 +58,7 @@ export const dashboardModules: DashboardModule[] = [
     description:
       "Fechamentos comerciais integrados ao faturamento e ao sincronismo de status.",
     endpoint: "/sales",
+    href: "/vendas",
     profiles: ["ADMIN", "OPERATOR", "PARTNER"],
   },
   {
@@ -61,6 +67,7 @@ export const dashboardModules: DashboardModule[] = [
     description:
       "Visão consolidada de regras comerciais, billing records e split operacional.",
     endpoint: "/finance/billing-records",
+    href: "/financeiro",
     profiles: ["ADMIN", "OPERATOR"],
   },
 ];

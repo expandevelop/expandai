@@ -1,4 +1,8 @@
-import { API_BASE_URL } from "@/lib/session";
+import {
+  API_BASE_URL,
+  persistSession,
+  readSessionFromStorage,
+} from "@/lib/session";
 import type {
   AuthSession,
   AuthUser,
@@ -20,6 +24,22 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function buildAuthenticatedResponse(
+  path: string,
+  accessToken: string,
+  init?: RequestInit,
+) {
+  return fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(init?.headers ?? {}),
+    },
+    cache: "no-store",
+  });
+}
+
 export async function login(email: string, password: string) {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
@@ -32,20 +52,40 @@ export async function login(email: string, password: string) {
   return parseResponse<AuthSession>(response);
 }
 
+export async function refreshSession(refreshToken: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  return parseResponse<AuthSession>(response);
+}
+
 export async function authenticatedRequest<T>(
   path: string,
   accessToken: string,
   init?: RequestInit,
 ) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  let response = await buildAuthenticatedResponse(path, accessToken, init);
+
+  if (response.status === 401 && typeof window !== "undefined") {
+    const storedSession = readSessionFromStorage();
+
+    if (!storedSession?.refreshToken) {
+      throw new Error("A sessão expirou e não foi possível renovar o token de acesso.");
+    }
+
+    const refreshedSession = await refreshSession(storedSession.refreshToken);
+    persistSession(refreshedSession);
+    response = await buildAuthenticatedResponse(
+      path,
+      refreshedSession.accessToken,
+      init,
+    );
+  }
 
   return parseResponse<T>(response);
 }
