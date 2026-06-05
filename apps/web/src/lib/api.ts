@@ -7,6 +7,7 @@ import type {
   AuthSession,
   AuthUser,
   BillingRecord,
+  Client,
   CommercialRule,
   Operator,
   Opportunity,
@@ -14,6 +15,32 @@ import type {
   ProductCatalog,
   Sale,
 } from "@/types/expandai";
+
+export type OpportunityMutationPayload = {
+  operatorId: string;
+  partnerId?: string;
+  clientId?: string;
+  productCatalogId?: string;
+  title: string;
+  description?: string;
+  source?: string;
+  estimatedValue?: number;
+  closeExpectedAt?: string;
+};
+
+export type SaleMutationPayload = {
+  opportunityId?: string;
+  operatorId: string;
+  partnerId?: string;
+  clientId?: string;
+  productCatalogId?: string;
+  commercialRuleId?: string;
+  title: string;
+  description?: string;
+  grossAmount: number;
+  netAmount?: number;
+  externalReference?: string;
+};
 
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -106,12 +133,41 @@ export function fetchPartners(accessToken: string) {
   return authenticatedRequest<Partner[]>("/partners", accessToken);
 }
 
+export function fetchClients(accessToken: string) {
+  return authenticatedRequest<Client[]>("/clients", accessToken);
+}
+
 export function fetchProductCatalogs(accessToken: string) {
   return authenticatedRequest<ProductCatalog[]>("/product-catalogs", accessToken);
 }
 
 export function fetchOpportunities(accessToken: string) {
   return authenticatedRequest<Opportunity[]>("/opportunities", accessToken);
+}
+
+export function fetchOpportunityById(accessToken: string, opportunityId: string) {
+  return authenticatedRequest<Opportunity>(`/opportunities/${opportunityId}`, accessToken);
+}
+
+export function createOpportunity(
+  accessToken: string,
+  payload: OpportunityMutationPayload,
+) {
+  return authenticatedRequest<Opportunity>("/opportunities", accessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateOpportunity(
+  accessToken: string,
+  opportunityId: string,
+  payload: Partial<OpportunityMutationPayload> & { stage?: string; lostReason?: string },
+) {
+  return authenticatedRequest<Opportunity>(`/opportunities/${opportunityId}`, accessToken, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function updateOpportunityStage(
@@ -156,6 +212,28 @@ export function markOpportunityAsLost(
 
 export function fetchSales(accessToken: string) {
   return authenticatedRequest<Sale[]>("/sales", accessToken);
+}
+
+export function fetchSaleById(accessToken: string, saleId: string) {
+  return authenticatedRequest<Sale>(`/sales/${saleId}`, accessToken);
+}
+
+export function createSale(accessToken: string, payload: SaleMutationPayload) {
+  return authenticatedRequest<Sale>("/sales", accessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateSale(
+  accessToken: string,
+  saleId: string,
+  payload: Partial<SaleMutationPayload>,
+) {
+  return authenticatedRequest<Sale>(`/sales/${saleId}`, accessToken, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function updateSaleStatus(

@@ -37,6 +37,17 @@ export type Partner = {
   updatedAt?: string;
 };
 
+export type Client = {
+  id: string;
+  companyName: string;
+  document?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type ProductCatalog = {
   id: string;
   operatorId?: string;
@@ -55,6 +66,8 @@ export type Opportunity = {
   description?: string | null;
   externalReference?: string | null;
   estimatedValue?: string | null;
+  source?: string | null;
+  closeExpectedAt?: string | null;
   stage: string;
   createdAt?: string;
   updatedAt?: string;
@@ -156,4 +169,10 @@ export type Sale = {
   > | null;
   opportunity?: Pick<Opportunity, "id" | "title" | "stage"> | null;
   billingRecord?: Pick<BillingRecord, "id" | "status" | "splitStatus"> | null;
+};
+
+export type TransactionFormOption = {
+  value: string;
+  label: string;
+  hint?: string;
 };

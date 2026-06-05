@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchBillingRecords,
+  fetchClients,
   fetchCommercialRules,
   fetchOpportunities,
   fetchOperators,
@@ -13,6 +14,7 @@ import {
 import { getModulesForRole } from "@/lib/modules";
 import type {
   BillingRecord,
+  Client,
   CommercialRule,
   Operator,
   Opportunity,
@@ -24,6 +26,7 @@ import type {
 type DashboardData = {
   operators: Operator[];
   partners: Partner[];
+  clients: Client[];
   productCatalogs: ProductCatalog[];
   opportunities: Opportunity[];
   sales: Sale[];
@@ -34,6 +37,7 @@ type DashboardData = {
 const EMPTY_DASHBOARD_DATA: DashboardData = {
   operators: [],
   partners: [],
+  clients: [],
   productCatalogs: [],
   opportunities: [],
   sales: [],
@@ -62,24 +66,38 @@ export function useExpandaiData(accessToken?: string | null, role?: string | nul
     }
 
     const visibleKeys = new Set(visibleModules.map((module) => module.key));
+    const needsCommercialContext =
+      visibleKeys.has("opportunities") ||
+      visibleKeys.has("sales") ||
+      visibleKeys.has("finance") ||
+      visibleKeys.has("catalog");
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const [operators, partners, productCatalogs, opportunities, sales, financePayload] =
+      const [operators, partners, clients, productCatalogs, opportunities, sales, financePayload] =
         await Promise.all([
-          visibleKeys.has("operators") ? fetchOperators(accessToken) : Promise.resolve([]),
-          visibleKeys.has("partners") ? fetchPartners(accessToken) : Promise.resolve([]),
-          visibleKeys.has("catalog") ? fetchProductCatalogs(accessToken) : Promise.resolve([]),
+          needsCommercialContext || visibleKeys.has("operators")
+            ? fetchOperators(accessToken)
+            : Promise.resolve([]),
+          needsCommercialContext || visibleKeys.has("partners")
+            ? fetchPartners(accessToken)
+            : Promise.resolve([]),
+          needsCommercialContext ? fetchClients(accessToken) : Promise.resolve([]),
+          needsCommercialContext || visibleKeys.has("catalog")
+            ? fetchProductCatalogs(accessToken)
+            : Promise.resolve([]),
           visibleKeys.has("opportunities")
             ? fetchOpportunities(accessToken)
             : Promise.resolve([]),
           visibleKeys.has("sales") ? fetchSales(accessToken) : Promise.resolve([]),
-          visibleKeys.has("finance")
+          needsCommercialContext
             ? Promise.all([
                 fetchCommercialRules(accessToken),
-                fetchBillingRecords(accessToken),
+                visibleKeys.has("finance")
+                  ? fetchBillingRecords(accessToken)
+                  : Promise.resolve([] as BillingRecord[]),
               ])
             : Promise.resolve([[], []] as [CommercialRule[], BillingRecord[]]),
         ]);
@@ -87,6 +105,7 @@ export function useExpandaiData(accessToken?: string | null, role?: string | nul
       setData({
         operators,
         partners,
+        clients,
         productCatalogs,
         opportunities,
         sales,
@@ -119,12 +138,15 @@ export function useExpandaiData(accessToken?: string | null, role?: string | nul
     const releasedSplitValue = sumCurrencyStrings(
       data.billingRecords
         .filter((record) => record.splitStatus === "RELEASED")
-        .flatMap((record) => record.splitAllocations?.map((allocation) => allocation.amount) ?? []),
+        .flatMap(
+          (record) => record.splitAllocations?.map((allocation) => allocation.amount) ?? [],
+        ),
     );
 
     return {
       operators: data.operators.length,
       partners: data.partners.length,
+      clients: data.clients.length,
       openOpportunities,
       billedSales,
       grossSalesValue,
