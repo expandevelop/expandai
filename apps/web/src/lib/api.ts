@@ -42,6 +42,28 @@ export type SaleMutationPayload = {
   externalReference?: string;
 };
 
+export type CommercialRuleMutationPayload = {
+  productCatalogId: string;
+  operatorId: string;
+  operatorPercentage: number;
+  partnerPercentage: number;
+  platformPercentage: number;
+  notes?: string;
+};
+
+export type BillingRecordMutationPayload = {
+  operatorId: string;
+  partnerId?: string;
+  clientId?: string;
+  productCatalogId?: string;
+  commercialRuleId?: string;
+  description: string;
+  grossAmount: number;
+  netAmount?: number;
+  externalReference?: string;
+  dueDate?: string;
+};
+
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const message = await response.text();
@@ -260,9 +282,46 @@ export function fetchCommercialRules(accessToken: string) {
   );
 }
 
+export function createCommercialRule(
+  accessToken: string,
+  payload: CommercialRuleMutationPayload,
+) {
+  return authenticatedRequest<CommercialRule>("/finance/commercial-rules", accessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function fetchBillingRecords(accessToken: string) {
   return authenticatedRequest<BillingRecord[]>(
     "/finance/billing-records",
     accessToken,
+  );
+}
+
+export function fetchBillingRecordById(accessToken: string, billingRecordId: string) {
+  return authenticatedRequest<BillingRecord>(
+    `/finance/billing-records/${billingRecordId}`,
+    accessToken,
+  );
+}
+
+export function createBillingRecord(
+  accessToken: string,
+  payload: BillingRecordMutationPayload,
+) {
+  return authenticatedRequest<BillingRecord>("/finance/billing-records", accessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function payBillingRecord(accessToken: string, billingRecordId: string) {
+  return authenticatedRequest<BillingRecord>(
+    `/finance/billing-records/${billingRecordId}/pay`,
+    accessToken,
+    {
+      method: "PATCH",
+    },
   );
 }

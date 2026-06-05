@@ -39,6 +39,14 @@ export class FinanceController {
     return this.financeService.listBillingRecords();
   }
 
+  @Get('billing-records/:id')
+  @ApiOperation({ summary: 'Consultar em detalhe um registro de faturamento e seus splits.' })
+  @ApiParam({ name: 'id', description: 'Identificador do registro de faturamento.' })
+  @ApiOkResponse({ description: 'Registro de faturamento retornado com sucesso.' })
+  getBillingRecordById(@Param('id') id: string) {
+    return this.financeService.getBillingRecordById(id);
+  }
+
   @Post('billing-records')
   @ApiOperation({ summary: 'Criar um registro de faturamento com cálculo inicial de split.' })
   @ApiCreatedResponse({ description: 'Registro de faturamento criado com sucesso.' })

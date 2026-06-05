@@ -131,8 +131,13 @@ export type BillingRecord = {
     id: string;
     companyName?: string;
     tradeName?: string;
+    document?: string;
   } | null;
   productCatalog?: Pick<ProductCatalog, "id" | "name" | "category"> | null;
+  commercialRule?: Pick<
+    CommercialRule,
+    "id" | "operatorPercentage" | "partnerPercentage" | "platformPercentage" | "notes"
+  > | null;
   splitAllocations?: BillingSplitAllocation[];
 };
 

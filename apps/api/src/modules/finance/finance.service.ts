@@ -133,6 +133,58 @@ export class FinanceService {
     });
   }
 
+  async getBillingRecordById(id: string) {
+    const billingRecord = await this.prisma.billingRecord.findUnique({
+      where: { id },
+      include: {
+        operator: {
+          select: {
+            id: true,
+            legalName: true,
+            tradeName: true,
+          },
+        },
+        partner: {
+          select: {
+            id: true,
+            companyName: true,
+            partnerLevel: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            companyName: true,
+            document: true,
+          },
+        },
+        productCatalog: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
+        },
+        commercialRule: {
+          select: {
+            id: true,
+            operatorPercentage: true,
+            partnerPercentage: true,
+            platformPercentage: true,
+            notes: true,
+          },
+        },
+        splitAllocations: true,
+      },
+    });
+
+    if (!billingRecord) {
+      throw new NotFoundException('Registro de faturamento não encontrado.');
+    }
+
+    return billingRecord;
+  }
+
   async createBillingRecord(dto: CreateBillingRecordDto) {
     const operator = await this.prisma.operator.findUnique({
       where: { id: dto.operatorId },
@@ -237,6 +289,15 @@ export class FinanceService {
             name: true,
           },
         },
+        commercialRule: {
+          select: {
+            id: true,
+            operatorPercentage: true,
+            partnerPercentage: true,
+            platformPercentage: true,
+            notes: true,
+          },
+        },
         splitAllocations: true,
       },
     });
@@ -272,7 +333,46 @@ export class FinanceService {
 
     return this.prisma.billingRecord.findUnique({
       where: { id },
-      include: { splitAllocations: true },
+      include: {
+        operator: {
+          select: {
+            id: true,
+            legalName: true,
+            tradeName: true,
+          },
+        },
+        partner: {
+          select: {
+            id: true,
+            companyName: true,
+            partnerLevel: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            companyName: true,
+            document: true,
+          },
+        },
+        productCatalog: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
+        },
+        commercialRule: {
+          select: {
+            id: true,
+            operatorPercentage: true,
+            partnerPercentage: true,
+            platformPercentage: true,
+            notes: true,
+          },
+        },
+        splitAllocations: true,
+      },
     });
   }
 

@@ -253,6 +253,14 @@ export default function SaleDetailPage() {
                       >
                         Sincronizar com faturamento
                       </button>
+                      {sale.billingRecordId ? (
+                        <Link
+                          href={`/financeiro/${sale.billingRecordId}`}
+                          className="inline-flex rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm font-medium text-violet-100 transition hover:bg-violet-500/20"
+                        >
+                          Abrir detalhe financeiro
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                 </section>
