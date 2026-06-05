@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+  PARTNER
+  CLIENT
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum OnboardingActorType {
+  OPERATOR
+  PARTNER
+  CLIENT
+}
+
+enum OnboardingStatus {
+  DRAFT
+  PENDING_DOCUMENTS
+  PENDING_KYC
+  PENDING_CONTRACT
+  ACTIVE
+  REJECTED
+}
+
+model User {
+  id               String      @id @default(cuid())
+  name             String
+  email            String      @unique
+  passwordHash     String?
+  role             UserRole
+  status           RecordStatus @default(PENDING)
+  ecosystemProfile String?
+  phone            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  operator         Operator?
+  partner          Partner?
+  client           Client?
+}
+
+model Operator {
+  id                 String       @id @default(cuid())
+  userId             String       @unique
+  legalName          String
+  tradeName          String?
+  document           String       @unique
+  email              String
+  phone              String?
+  website            String?
+  status             RecordStatus @default(PENDING)
+  commissionModel    String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  user               User         @relation(fields: [userId], references: [id])
+  productCatalogs    ProductCatalog[]
+  onboardings        Onboarding[]
+}
+
+model Partner {
+  id                 String       @id @default(cuid())
+  userId             String       @unique
+  document           String       @unique
+  companyName        String?
+  partnerLevel       String       @default("ENTRY")
+  score              Decimal      @default(0)
+  status             RecordStatus @default(PENDING)
+  city               String?
+  state              String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  user               User         @relation(fields: [userId], references: [id])
+  onboardings        Onboarding[]
+}
+
+model Client {
+  id                 String       @id @default(cuid())
+  userId             String       @unique
+  companyName        String
+  document           String       @unique
+  email              String
+  phone              String?
+  status             RecordStatus @default(PENDING)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  user               User         @relation(fields: [userId], references: [id])
+  onboardings        Onboarding[]
+}
+
+model Onboarding {
+  id                 String               @id @default(cuid())
+  actorType          OnboardingActorType
+  status             OnboardingStatus     @default(DRAFT)
+  payload            Json
+  operatorId         String?
+  partnerId          String?
+  clientId           String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  operator           Operator?            @relation(fields: [operatorId], references: [id])
+  partner            Partner?             @relation(fields: [partnerId], references: [id])
+  client             Client?              @relation(fields: [clientId], references: [id])
+}
+
+model ProductCatalog {
+  id                 String       @id @default(cuid())
+  operatorId         String
+  name               String
+  description        String?
+  category           String?
+  commissionRule     String?
+  status             RecordStatus @default(PENDING)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  operator           Operator     @relation(fields: [operatorId], references: [id])
+}
