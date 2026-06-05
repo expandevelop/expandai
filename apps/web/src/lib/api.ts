@@ -114,8 +114,65 @@ export function fetchOpportunities(accessToken: string) {
   return authenticatedRequest<Opportunity[]>("/opportunities", accessToken);
 }
 
+export function updateOpportunityStage(
+  accessToken: string,
+  opportunityId: string,
+  payload: { stage: string; reason?: string },
+) {
+  return authenticatedRequest<Opportunity>(
+    `/opportunities/${opportunityId}/stage`,
+    accessToken,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function markOpportunityAsWon(accessToken: string, opportunityId: string) {
+  return authenticatedRequest<Opportunity>(
+    `/opportunities/${opportunityId}/won`,
+    accessToken,
+    {
+      method: "PATCH",
+    },
+  );
+}
+
+export function markOpportunityAsLost(
+  accessToken: string,
+  opportunityId: string,
+  reason?: string,
+) {
+  return authenticatedRequest<Opportunity>(
+    `/opportunities/${opportunityId}/lost`,
+    accessToken,
+    {
+      method: "PATCH",
+      body: JSON.stringify(reason ? { reason } : {}),
+    },
+  );
+}
+
 export function fetchSales(accessToken: string) {
   return authenticatedRequest<Sale[]>("/sales", accessToken);
+}
+
+export function updateSaleStatus(
+  accessToken: string,
+  saleId: string,
+  payload: { status: string },
+) {
+  return authenticatedRequest<Sale>(`/sales/${saleId}/status`, accessToken, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function syncSaleBillingStatus(accessToken: string, saleId: string) {
+  return authenticatedRequest<Sale>(`/sales/${saleId}/sync-billing-status`, accessToken, {
+    method: "PATCH",
+  });
 }
 
 export function fetchCommercialRules(accessToken: string) {
