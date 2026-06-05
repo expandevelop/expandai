@@ -52,12 +52,27 @@ export type ProductCatalog = {
   id: string;
   operatorId?: string;
   name: string;
-  category: string;
+  description?: string | null;
+  category?: string | null;
+  commissionRule?: string | null;
   status: string;
   price?: string;
   createdAt?: string;
   updatedAt?: string;
-  operator?: Pick<Operator, "id" | "legalName" | "tradeName" | "status">;
+  operator?:
+    | (Pick<Operator, "id" | "legalName" | "tradeName" | "status"> & {
+        document?: string | null;
+        commissionModel?: string | null;
+      })
+    | null;
+};
+
+export type ProductCatalogMutationPayload = {
+  operatorId: string;
+  name: string;
+  description?: string;
+  category?: string;
+  commissionRule?: string;
 };
 
 export type Opportunity = {

@@ -13,6 +13,7 @@ import type {
   Opportunity,
   Partner,
   ProductCatalog,
+  ProductCatalogMutationPayload,
   Sale,
 } from "@/types/expandai";
 
@@ -161,6 +162,61 @@ export function fetchClients(accessToken: string) {
 
 export function fetchProductCatalogs(accessToken: string) {
   return authenticatedRequest<ProductCatalog[]>("/product-catalogs", accessToken);
+}
+
+export function fetchProductCatalogById(accessToken: string, productCatalogId: string) {
+  return authenticatedRequest<ProductCatalog>(`/product-catalogs/${productCatalogId}`, accessToken);
+}
+
+export function createProductCatalog(
+  accessToken: string,
+  payload: ProductCatalogMutationPayload,
+) {
+  return authenticatedRequest<ProductCatalog>("/product-catalogs", accessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateProductCatalog(
+  accessToken: string,
+  productCatalogId: string,
+  payload: Partial<ProductCatalogMutationPayload>,
+) {
+  return authenticatedRequest<ProductCatalog>(`/product-catalogs/${productCatalogId}`, accessToken, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function activateProductCatalog(accessToken: string, productCatalogId: string) {
+  return authenticatedRequest<ProductCatalog>(
+    `/product-catalogs/${productCatalogId}/activate`,
+    accessToken,
+    {
+      method: "PATCH",
+    },
+  );
+}
+
+export function deactivateProductCatalog(accessToken: string, productCatalogId: string) {
+  return authenticatedRequest<ProductCatalog>(
+    `/product-catalogs/${productCatalogId}/deactivate`,
+    accessToken,
+    {
+      method: "PATCH",
+    },
+  );
+}
+
+export function deleteProductCatalog(accessToken: string, productCatalogId: string) {
+  return authenticatedRequest<{ message: string; id: string }>(
+    `/product-catalogs/${productCatalogId}`,
+    accessToken,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export function fetchOpportunities(accessToken: string) {

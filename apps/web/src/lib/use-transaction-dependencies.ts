@@ -10,8 +10,9 @@ import type {
   TransactionFormOption,
 } from "@/types/expandai";
 
-function buildLabel(primary: string, secondary?: string | null) {
-  return secondary ? `${primary} · ${secondary}` : primary;
+function buildLabel(primary?: string | null, secondary?: string | null) {
+  const base = primary ?? "—";
+  return secondary ? `${base} · ${secondary}` : base;
 }
 
 export function useTransactionDependencies(accessToken?: string | null, role?: string | null) {
