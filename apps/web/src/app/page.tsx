@@ -1,129 +1,64 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  fetchBillingRecords,
+  fetchCommercialRules,
+  fetchCurrentUser,
+  fetchOpportunities,
+  fetchOperators,
+  fetchPartners,
+  fetchProductCatalogs,
+  fetchRoles,
+  fetchSales,
+  login,
+} from "@/lib/api";
+import { formatCompactDate, formatCurrency, truncateText } from "@/lib/formatters";
+import { dashboardModules, getModulesForRole } from "@/lib/modules";
+import { API_BASE_URL, persistSession, readSessionFromStorage } from "@/lib/session";
+import {
+  EmptyState,
+  MetricCard,
+  SectionHeader,
+  StatusBadge,
+} from "@/components/dashboard-ui";
+import type {
+  AuthSession,
+  AuthUser,
+  BillingRecord,
+  CommercialRule,
+  Operator,
+  Opportunity,
+  Partner,
+  ProductCatalog,
+  Sale,
+} from "@/types/expandai";
 
-type AuthUser = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  ecosystemProfile?: string | null;
-  status: string;
-  createdAt?: string;
-  updatedAt?: string;
+type DashboardData = {
+  operators: Operator[];
+  partners: Partner[];
+  productCatalogs: ProductCatalog[];
+  opportunities: Opportunity[];
+  sales: Sale[];
+  commercialRules: CommercialRule[];
+  billingRecords: BillingRecord[];
 };
 
-type AuthSession = {
-  accessToken: string;
-  refreshToken: string;
-  user: AuthUser;
+const EMPTY_DASHBOARD_DATA: DashboardData = {
+  operators: [],
+  partners: [],
+  productCatalogs: [],
+  opportunities: [],
+  sales: [],
+  commercialRules: [],
+  billingRecords: [],
 };
 
-type ModuleCard = {
-  title: string;
-  description: string;
-  endpoint: string;
-  profiles: string[];
-};
-
-const SESSION_STORAGE_KEY = "expandai:web:session";
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_EXPANDAI_API_URL ?? "http://34.238.172.151/api/v1";
-
-const moduleCards: ModuleCard[] = [
-  {
-    title: "Operadoras",
-    description:
-      "Consulta do cadastro mestre das operadoras conectadas ao ecossistema ExpandAI.",
-    endpoint: "/operators",
-    profiles: ["ADMIN", "OPERATOR"],
-  },
-  {
-    title: "Partners",
-    description:
-      "Acompanhamento do ecossistema comercial de parceiros e sua atuação na plataforma.",
-    endpoint: "/partners",
-    profiles: ["ADMIN", "OPERATOR", "PARTNER"],
-  },
-  {
-    title: "Catálogo de produtos",
-    description:
-      "Base comercial dos produtos publicados pelas operadoras com regras associadas.",
-    endpoint: "/product-catalogs",
-    profiles: ["ADMIN", "OPERATOR", "PARTNER"],
-  },
-  {
-    title: "Oportunidades",
-    description:
-      "Pipeline comercial com filtros por operadora, partner, cliente, produto e estágio.",
-    endpoint: "/opportunities",
-    profiles: ["ADMIN", "OPERATOR", "PARTNER"],
-  },
-  {
-    title: "Vendas",
-    description:
-      "Fechamentos comerciais integrados ao faturamento e ao sincronismo de status.",
-    endpoint: "/sales",
-    profiles: ["ADMIN", "OPERATOR", "PARTNER"],
-  },
-  {
-    title: "Financeiro",
-    description:
-      "Regras comerciais, faturamento e split operacional publicados na API real.",
-    endpoint: "/finance/billing-records",
-    profiles: ["ADMIN", "OPERATOR"],
-  },
-];
-
-function readSessionFromStorage(): AuthSession | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const rawSession = window.localStorage.getItem(SESSION_STORAGE_KEY);
-
-  if (!rawSession) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawSession) as AuthSession;
-  } catch {
-    window.localStorage.removeItem(SESSION_STORAGE_KEY);
-    return null;
-  }
-}
-
-function persistSession(session: AuthSession | null) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (!session) {
-    window.localStorage.removeItem(SESSION_STORAGE_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-}
-
-async function requestApi<T>(path: string, accessToken: string, init?: RequestInit) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Não foi possível concluir a operação solicitada.");
-  }
-
-  return (await response.json()) as T;
+function sumCurrencyStrings(values: Array<string | null | undefined>) {
+  return values.reduce((accumulator, currentValue) => {
+    const numericValue = Number(currentValue ?? 0);
+    return accumulator + (Number.isNaN(numericValue) ? 0 : numericValue);
+  }, 0);
 }
 
 export default function Home() {
@@ -131,10 +66,12 @@ export default function Home() {
   const [password, setPassword] = useState("Expand@123");
   const [session, setSession] = useState<AuthSession | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [adminRolesPayload, setAdminRolesPayload] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardData>(EMPTY_DASHBOARD_DATA);
+  const [rolesPayload, setRolesPayload] = useState<string | null>(null);
+  const [isBooting, setIsBooting] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,42 +79,121 @@ export default function Home() {
     const storedSession = readSessionFromStorage();
     setSession(storedSession);
     setCurrentUser(storedSession?.user ?? null);
-    setIsLoading(false);
+    setIsBooting(false);
   }, []);
 
-  const visibleModules = useMemo(() => {
-    if (!currentUser) {
-      return [];
+  const visibleModules = useMemo(
+    () => getModulesForRole(currentUser?.role),
+    [currentUser?.role],
+  );
+
+  const allowedModuleKeys = useMemo(
+    () => new Set(visibleModules.map((module) => module.key)),
+    [visibleModules],
+  );
+
+  const metrics = useMemo(() => {
+    const openOpportunities = dashboardData.opportunities.filter(
+      (opportunity) => opportunity.stage !== "WON" && opportunity.stage !== "LOST",
+    ).length;
+
+    const billedSales = dashboardData.sales.filter(
+      (sale) => sale.status === "BILLED",
+    ).length;
+
+    const grossSalesValue = sumCurrencyStrings(
+      dashboardData.sales.map((sale) => sale.grossAmount),
+    );
+
+    const releasedSplitValue = sumCurrencyStrings(
+      dashboardData.billingRecords
+        .filter((record) => record.splitStatus === "RELEASED")
+        .flatMap((record) => record.splitAllocations?.map((allocation) => allocation.amount) ?? []),
+    );
+
+    return {
+      operators: dashboardData.operators.length,
+      partners: dashboardData.partners.length,
+      openOpportunities,
+      billedSales,
+      grossSalesValue,
+      releasedSplitValue,
+      activeCatalogs: dashboardData.productCatalogs.filter(
+        (catalog) => catalog.status === "ACTIVE" || catalog.status === "PENDING",
+      ).length,
+      confirmedBillings: dashboardData.billingRecords.filter(
+        (record) => record.status === "PAYMENT_CONFIRMED",
+      ).length,
+    };
+  }, [dashboardData]);
+
+  async function loadDashboardData(accessToken: string, role?: string | null) {
+    const visibleKeys = new Set(getModulesForRole(role).map((module) => module.key));
+
+    setIsLoadingDashboard(true);
+    setError(null);
+
+    try {
+      const [operators, partners, productCatalogs, opportunities, sales, financePayload] =
+        await Promise.all([
+          visibleKeys.has("operators") ? fetchOperators(accessToken) : Promise.resolve([]),
+          visibleKeys.has("partners") ? fetchPartners(accessToken) : Promise.resolve([]),
+          visibleKeys.has("catalog") ? fetchProductCatalogs(accessToken) : Promise.resolve([]),
+          visibleKeys.has("opportunities")
+            ? fetchOpportunities(accessToken)
+            : Promise.resolve([]),
+          visibleKeys.has("sales") ? fetchSales(accessToken) : Promise.resolve([]),
+          visibleKeys.has("finance")
+            ? Promise.all([
+                fetchCommercialRules(accessToken),
+                fetchBillingRecords(accessToken),
+              ])
+            : Promise.resolve([[], []] as [CommercialRule[], BillingRecord[]]),
+        ]);
+
+      setDashboardData({
+        operators,
+        partners,
+        productCatalogs,
+        opportunities,
+        sales,
+        commercialRules: financePayload[0],
+        billingRecords: financePayload[1],
+      });
+      setFeedback("Dashboard sincronizado com sucesso a partir da API publicada.");
+    } catch (dashboardError) {
+      setDashboardData(EMPTY_DASHBOARD_DATA);
+      setError(
+        dashboardError instanceof Error
+          ? dashboardError.message
+          : "Falha ao carregar os módulos operacionais da plataforma.",
+      );
+    } finally {
+      setIsLoadingDashboard(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!session?.accessToken || !currentUser?.role) {
+      setDashboardData(EMPTY_DASHBOARD_DATA);
+      return;
     }
 
-    return moduleCards.filter((module) => module.profiles.includes(currentUser.role));
-  }, [currentUser]);
+    void loadDashboardData(session.accessToken, currentUser.role);
+  }, [session?.accessToken, currentUser?.role]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
     setFeedback(null);
-    setAdminRolesPayload(null);
+    setRolesPayload(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Falha ao autenticar-se na plataforma.");
-      }
-
-      const authenticatedSession = (await response.json()) as AuthSession;
+      const authenticatedSession = await login(email, password);
+      persistSession(authenticatedSession);
       setSession(authenticatedSession);
       setCurrentUser(authenticatedSession.user);
-      persistSession(authenticatedSession);
       setFeedback("Sessão autenticada com sucesso na API real da ExpandAI.");
     } catch (loginError) {
       setError(
@@ -200,15 +216,15 @@ export default function Home() {
     setFeedback(null);
 
     try {
-      const user = await requestApi<AuthUser>("/users/me", session.accessToken);
+      const user = await fetchCurrentUser(session.accessToken);
       const nextSession = {
         ...session,
         user,
       };
-      setCurrentUser(user);
-      setSession(nextSession);
       persistSession(nextSession);
-      setFeedback("Perfil autenticado recarregado a partir da API publicada.");
+      setSession(nextSession);
+      setCurrentUser(user);
+      setFeedback("Perfil autenticado recarregado a partir do endpoint /users/me.");
     } catch (profileError) {
       setError(
         profileError instanceof Error
@@ -229,14 +245,11 @@ export default function Home() {
     setFeedback(null);
 
     try {
-      const payload = await requestApi<{ roles: string[] }>(
-        "/users/roles",
-        session.accessToken,
-      );
-      setAdminRolesPayload(JSON.stringify(payload, null, 2));
+      const payload = await fetchRoles(session.accessToken);
+      setRolesPayload(JSON.stringify(payload, null, 2));
       setFeedback("Payload administrativo de roles carregado com sucesso.");
     } catch (rolesError) {
-      setAdminRolesPayload(null);
+      setRolesPayload(null);
       setError(
         rolesError instanceof Error
           ? rolesError.message
@@ -246,15 +259,16 @@ export default function Home() {
   }
 
   function handleLogout() {
+    persistSession(null);
     setSession(null);
     setCurrentUser(null);
-    setAdminRolesPayload(null);
-    persistSession(null);
+    setDashboardData(EMPTY_DASHBOARD_DATA);
+    setRolesPayload(null);
     setFeedback("Sessão local removida com sucesso.");
     setError(null);
   }
 
-  if (isLoading) {
+  if (isBooting) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
@@ -266,34 +280,35 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-10 lg:px-10">
-        <section className="grid gap-6 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-slate-950/30 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-10 lg:px-10">
+        <section className="grid gap-6 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-slate-950/30 lg:grid-cols-[1.25fr_0.75fr]">
           <div className="space-y-5">
             <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
               ExpandAI Platform
             </span>
             <div className="space-y-3">
               <h1 className="text-4xl font-semibold tracking-tight text-white lg:text-5xl">
-                Operação B2B conectada por autenticação real, perfis e fluxos publicados.
+                Dashboard web conectado à API real, com sessão persistida e visão operacional.
               </h1>
               <p className="max-w-3xl text-sm leading-7 text-slate-300 lg:text-base">
-                Esta primeira entrega da camada web já consome a API real publicada na EC2,
-                autentica por JWT, persiste a sessão em <strong>local storage</strong> e exibe
-                um shell operacional alinhado aos módulos estratégicos da ExpandAI.
+                Esta etapa transforma o shell inicial em um <strong>painel operacional</strong>
+                que consulta os módulos reais de <strong>operadoras</strong>, <strong>partners</strong>,
+                <strong> catálogo</strong>, <strong>oportunidades</strong>, <strong>vendas</strong> e
+                <strong> financeiro</strong>, respeitando o perfil autenticado na sessão.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <article className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">API base</p>
-                <p className="mt-2 text-sm font-medium text-cyan-100">{API_BASE_URL}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">API base</p>
+                <p className="mt-2 break-all text-sm font-medium text-cyan-100">{API_BASE_URL}</p>
               </article>
               <article className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Autenticação</p>
-                <p className="mt-2 text-sm font-medium text-white">JWT + Refresh Token</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Módulos visíveis</p>
+                <p className="mt-2 text-sm font-medium text-white">{visibleModules.length || 0}</p>
               </article>
               <article className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Sessão web</p>
-                <p className="mt-2 text-sm font-medium text-white">Persistida localmente</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Sessão web</p>
+                <p className="mt-2 text-sm font-medium text-white">Local storage + Bearer Token</p>
               </article>
             </div>
           </div>
@@ -302,10 +317,9 @@ export default function Home() {
             {!session ? (
               <form className="space-y-5" onSubmit={handleLogin}>
                 <div className="space-y-2">
-                  <h2 className="text-xl font-semibold text-white">Login inicial</h2>
+                  <h2 className="text-xl font-semibold text-white">Login de operação</h2>
                   <p className="text-sm leading-6 text-slate-400">
-                    Use a credencial publicada no checkpoint de autenticação para validar o
-                    frontend contra a API real da ExpandAI.
+                    Entre com uma credencial válida para carregar os módulos publicados da ExpandAI.
                   </p>
                 </div>
                 <div className="space-y-4">
@@ -341,9 +355,7 @@ export default function Home() {
             ) : (
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">
-                    Sessão ativa
-                  </p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Sessão ativa</p>
                   <h2 className="text-xl font-semibold text-white">{currentUser?.name}</h2>
                   <p className="text-sm leading-6 text-slate-400">
                     Perfil autenticado: <strong>{currentUser?.role}</strong> · e-mail{" "}
@@ -360,22 +372,34 @@ export default function Home() {
                     {isRefreshingProfile ? "Atualizando perfil..." : "Recarregar /users/me"}
                   </button>
                   <button
-                    className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+                    className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() =>
+                      session?.accessToken && currentUser?.role
+                        ? loadDashboardData(session.accessToken, currentUser.role)
+                        : undefined
+                    }
+                    disabled={isLoadingDashboard}
+                    type="button"
+                  >
+                    {isLoadingDashboard ? "Sincronizando dados..." : "Sincronizar dashboard"}
+                  </button>
+                  {currentUser?.role === "ADMIN" ? (
+                    <button
+                      className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm font-medium text-amber-100 transition hover:bg-amber-400/20"
+                      onClick={loadAdminRoles}
+                      type="button"
+                    >
+                      Consultar /users/roles
+                    </button>
+                  ) : null}
+                  <button
+                    className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-rose-400/40 hover:text-rose-100"
                     onClick={handleLogout}
                     type="button"
                   >
                     Encerrar sessão local
                   </button>
                 </div>
-                {currentUser?.role === "ADMIN" ? (
-                  <button
-                    className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm font-medium text-amber-100 transition hover:bg-amber-400/20"
-                    onClick={loadAdminRoles}
-                    type="button"
-                  >
-                    Validar endpoint administrativo /users/roles
-                  </button>
-                ) : null}
               </div>
             )}
 
@@ -393,73 +417,397 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            label="Operadoras e partners"
+            value={`${metrics.operators} / ${metrics.partners}`}
+            description="Quantidade de entidades comerciais disponíveis ao perfil atual."
+          />
+          <MetricCard
+            label="Pipeline comercial"
+            value={`${metrics.openOpportunities} oportunidades abertas`}
+            description="Oportunidades em andamento, excluindo etapas finais de ganho e perda."
+          />
+          <MetricCard
+            label="Vendas faturadas"
+            value={`${metrics.billedSales} vendas`}
+            description={`Volume bruto consolidado: ${formatCurrency(metrics.grossSalesValue)}.`}
+          />
+          <MetricCard
+            label="Split liberado"
+            value={formatCurrency(metrics.releasedSplitValue)}
+            description={`Billing records confirmados: ${metrics.confirmedBillings}.`}
+          />
+        </section>
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+          <SectionHeader
+            eyebrow="Descoberta por perfil"
+            title="Módulos disponibilizados ao usuário autenticado"
+            description="A navegação abaixo espelha a política atual de autorização do backend e indica quais áreas já podem ser consumidas pela camada web nesta etapa."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visibleModules.length > 0 ? (
+              visibleModules.map((module) => (
+                <article
+                  key={module.key}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5"
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">{module.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-400">
+                        {module.description}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-xs text-cyan-100">
+                      Endpoint preparado: {module.endpoint}
+                    </div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                      Perfis habilitados: {module.profiles.join(" · ")}
+                    </p>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <EmptyState
+                title="Nenhum módulo visível"
+                description="Autentique-se com um perfil habilitado para carregar a navegação operacional da plataforma."
+              />
+            )}
+          </div>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
           <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-white">Contexto da sessão</h2>
-              <p className="text-sm leading-6 text-slate-400">
-                O payload abaixo representa o estado autenticado persistido localmente e a base
-                que será reaproveitada na próxima etapa para app shell, guards de rota e consumo
-                dos módulos operacionais.
-              </p>
-            </div>
+            <SectionHeader
+              eyebrow="Contexto autenticado"
+              title="Sessão e payload administrativo"
+              description="Este bloco ajuda na validação técnica da sessão persistida localmente e do contrato retornado pelos endpoints transversais de autenticação e autorização."
+            />
             <pre className="mt-5 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950 p-4 text-xs leading-6 text-slate-200">
               {JSON.stringify(
                 {
                   apiBaseUrl: API_BASE_URL,
-                  session,
                   currentUser,
+                  visibleModules: visibleModules.map((module) => module.key),
                 },
                 null,
                 2,
               )}
             </pre>
-            {adminRolesPayload ? (
+            {rolesPayload ? (
               <pre className="mt-5 overflow-x-auto rounded-2xl border border-amber-400/20 bg-slate-950 p-4 text-xs leading-6 text-amber-100">
-                {adminRolesPayload}
+                {rolesPayload}
               </pre>
             ) : null}
           </article>
 
           <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-white">Módulos visíveis por perfil</h2>
-              <p className="text-sm leading-6 text-slate-400">
-                A interface já apresenta um shell inicial orientado a perfil. Nesta fase, o foco
-                está em login, estado autenticado e descoberta de módulos; a próxima etapa deve
-                transformar estes cartões em rotas e telas de operação completas.
-              </p>
-            </div>
+            <SectionHeader
+              eyebrow="Módulo comercial"
+              title="Pipeline de oportunidades e vendas"
+              description="A web agora já materializa o encadeamento entre oportunidade, venda e faturamento, consumindo diretamente os dados persistidos no backend publicado."
+            />
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {visibleModules.length > 0 ? (
-                visibleModules.map((module) => (
-                  <article
-                    key={module.title}
-                    className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5"
-                  >
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{module.title}</h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-400">
-                          {module.description}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-xs text-cyan-100">
-                        Endpoint preparado: {module.endpoint}
-                      </div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                        Perfis habilitados: {module.profiles.join(" · ")}
-                      </p>
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/70 p-6 text-sm leading-6 text-slate-400">
-                  Autentique-se para visualizar os módulos disponibilizados ao perfil da sessão.
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Oportunidades</h3>
+                  <StatusBadge value={String(dashboardData.opportunities.length)} />
                 </div>
-              )}
+                {allowedModuleKeys.has("opportunities") ? (
+                  dashboardData.opportunities.length > 0 ? (
+                    <div className="space-y-3">
+                      {dashboardData.opportunities.slice(0, 4).map((opportunity) => (
+                        <article
+                          key={opportunity.id}
+                          className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <h4 className="text-sm font-semibold text-white">
+                                {opportunity.title}
+                              </h4>
+                              <p className="mt-1 text-xs leading-5 text-slate-400">
+                                {truncateText(opportunity.description, 110)}
+                              </p>
+                            </div>
+                            <StatusBadge value={opportunity.stage} />
+                          </div>
+                          <div className="mt-3 grid gap-2 text-xs text-slate-400 sm:grid-cols-2">
+                            <p>Operadora: {opportunity.operator?.tradeName ?? "—"}</p>
+                            <p>Partner: {opportunity.partner?.companyName ?? "—"}</p>
+                            <p>Produto: {opportunity.productCatalog?.name ?? "—"}</p>
+                            <p>Criada em: {formatCompactDate(opportunity.createdAt)}</p>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="Sem oportunidades carregadas"
+                      description="Ainda não há oportunidades retornadas pela API para o perfil atual."
+                    />
+                  )
+                ) : (
+                  <EmptyState
+                    title="Módulo indisponível para o perfil"
+                    description="O backend não expõe o pipeline de oportunidades ao papel autenticado nesta sessão."
+                  />
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Vendas</h3>
+                  <StatusBadge value={String(dashboardData.sales.length)} />
+                </div>
+                {allowedModuleKeys.has("sales") ? (
+                  dashboardData.sales.length > 0 ? (
+                    <div className="space-y-3">
+                      {dashboardData.sales.slice(0, 4).map((sale) => (
+                        <article
+                          key={sale.id}
+                          className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <h4 className="text-sm font-semibold text-white">{sale.title}</h4>
+                              <p className="mt-1 text-xs leading-5 text-slate-400">
+                                {truncateText(sale.description, 110)}
+                              </p>
+                            </div>
+                            <StatusBadge value={sale.status} />
+                          </div>
+                          <div className="mt-3 grid gap-2 text-xs text-slate-400 sm:grid-cols-2">
+                            <p>Valor bruto: {formatCurrency(sale.grossAmount)}</p>
+                            <p>Venda líquida: {formatCurrency(sale.netAmount)}</p>
+                            <p>Oportunidade: {sale.opportunity?.title ?? "—"}</p>
+                            <p>Billing: {sale.billingRecord?.status ?? "—"}</p>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="Sem vendas carregadas"
+                      description="Ainda não há vendas retornadas pela API para o perfil atual."
+                    />
+                  )
+                ) : (
+                  <EmptyState
+                    title="Módulo indisponível para o perfil"
+                    description="O backend não expõe a área de vendas ao papel autenticado nesta sessão."
+                  />
+                )}
+              </div>
             </div>
           </article>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+            <SectionHeader
+              eyebrow="Cadastros mestres"
+              title="Operadoras, partners e produtos publicados"
+              description="A camada web passa a materializar a base cadastral já persistida, oferecendo leitura rápida do ecossistema comercial ativo."
+            />
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <h3 className="text-lg font-semibold text-white">Operadoras</h3>
+                <div className="mt-4 space-y-3">
+                  {allowedModuleKeys.has("operators") ? (
+                    dashboardData.operators.length > 0 ? (
+                      dashboardData.operators.slice(0, 5).map((operator) => (
+                        <article key={operator.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium text-white">{operator.tradeName}</p>
+                            <StatusBadge value={operator.status} />
+                          </div>
+                          <p className="mt-2 text-xs text-slate-400">{operator.legalName}</p>
+                        </article>
+                      ))
+                    ) : (
+                      <EmptyState
+                        title="Sem operadoras"
+                        description="Nenhum registro retornado pela API para o perfil atual."
+                      />
+                    )
+                  ) : (
+                    <EmptyState
+                      title="Acesso restrito"
+                      description="Este módulo não está habilitado ao papel autenticado."
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <h3 className="text-lg font-semibold text-white">Partners</h3>
+                <div className="mt-4 space-y-3">
+                  {allowedModuleKeys.has("partners") ? (
+                    dashboardData.partners.length > 0 ? (
+                      dashboardData.partners.slice(0, 5).map((partner) => (
+                        <article key={partner.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium text-white">{partner.companyName}</p>
+                            <StatusBadge value={partner.status} />
+                          </div>
+                          <p className="mt-2 text-xs text-slate-400">
+                            Nível: {partner.partnerLevel ?? "—"}
+                          </p>
+                        </article>
+                      ))
+                    ) : (
+                      <EmptyState
+                        title="Sem partners"
+                        description="Nenhum parceiro foi retornado ao perfil autenticado."
+                      />
+                    )
+                  ) : (
+                    <EmptyState
+                      title="Acesso restrito"
+                      description="Este módulo não está habilitado ao papel autenticado."
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <h3 className="text-lg font-semibold text-white">Catálogo</h3>
+                <div className="mt-4 space-y-3">
+                  {allowedModuleKeys.has("catalog") ? (
+                    dashboardData.productCatalogs.length > 0 ? (
+                      dashboardData.productCatalogs.slice(0, 5).map((catalog) => (
+                        <article key={catalog.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium text-white">{catalog.name}</p>
+                            <StatusBadge value={catalog.status} />
+                          </div>
+                          <p className="mt-2 text-xs text-slate-400">
+                            Categoria: {catalog.category} · Operadora: {catalog.operator?.tradeName ?? "—"}
+                          </p>
+                        </article>
+                      ))
+                    ) : (
+                      <EmptyState
+                        title="Sem produtos"
+                        description="Nenhum produto foi retornado pela API para este perfil."
+                      />
+                    )
+                  ) : (
+                    <EmptyState
+                      title="Acesso restrito"
+                      description="Este módulo não está habilitado ao papel autenticado."
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+            <SectionHeader
+              eyebrow="Financeiro"
+              title="Billing records, split e regras comerciais"
+              description="O dashboard passa a refletir a conexão já existente entre a camada comercial e o módulo financeiro persistido no backend."
+            />
+            {allowedModuleKeys.has("finance") ? (
+              <div className="mt-6 space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <MetricCard
+                    label="Regras comerciais"
+                    value={String(dashboardData.commercialRules.length)}
+                    description="Configurações de percentuais entre operadora, partner e plataforma."
+                  />
+                  <MetricCard
+                    label="Billing records"
+                    value={String(dashboardData.billingRecords.length)}
+                    description="Registros financeiros já emitidos e sincronizados com o ciclo comercial."
+                  />
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                  <h3 className="text-lg font-semibold text-white">Últimos registros financeiros</h3>
+                  <div className="mt-4 space-y-3">
+                    {dashboardData.billingRecords.length > 0 ? (
+                      dashboardData.billingRecords.slice(0, 4).map((record) => (
+                        <article key={record.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <h4 className="text-sm font-semibold text-white">
+                                {record.description ?? record.externalReference ?? record.id}
+                              </h4>
+                              <p className="mt-1 text-xs text-slate-400">
+                                Produto: {record.productCatalog?.name ?? "—"}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <StatusBadge value={record.status} />
+                              <StatusBadge value={record.splitStatus} />
+                            </div>
+                          </div>
+                          <div className="mt-3 grid gap-2 text-xs text-slate-400 sm:grid-cols-2">
+                            <p>Valor bruto: {formatCurrency(record.grossAmount)}</p>
+                            <p>Valor líquido: {formatCurrency(record.netAmount)}</p>
+                            <p>Partner: {record.partner?.companyName ?? "—"}</p>
+                            <p>Pago em: {formatCompactDate(record.paidAt)}</p>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <EmptyState
+                        title="Sem billing records"
+                        description="Ainda não há registros financeiros retornados ao perfil autenticado."
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6">
+                <EmptyState
+                  title="Financeiro indisponível para o perfil"
+                  description="A API protege o módulo financeiro e o acesso não está habilitado ao papel autenticado nesta sessão."
+                />
+              </div>
+            )}
+          </article>
+        </section>
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+          <SectionHeader
+            eyebrow="Mapa de entrega"
+            title="Módulos previstos para as próximas iterações"
+            description="Esta tabela separa o que já está operacional na web desta etapa e o que ainda deve evoluir para telas completas de CRUD, filtros avançados e fluxos transacionais."
+          />
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70">
+            <table className="min-w-full divide-y divide-slate-800 text-left text-sm text-slate-200">
+              <thead className="bg-slate-900/80 text-xs uppercase tracking-[0.18em] text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Módulo</th>
+                  <th className="px-4 py-3">Endpoint</th>
+                  <th className="px-4 py-3">Status web nesta etapa</th>
+                  <th className="px-4 py-3">Próxima evolução</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {dashboardModules.map((module) => (
+                  <tr key={module.key} className="align-top">
+                    <td className="px-4 py-4 font-medium text-white">{module.title}</td>
+                    <td className="px-4 py-4 text-cyan-100">{module.endpoint}</td>
+                    <td className="px-4 py-4 text-slate-300">
+                      {visibleModules.some((visibleModule) => visibleModule.key === module.key)
+                        ? "Leitura inicial conectada à API real"
+                        : "Protegido por perfil ou fora do escopo do usuário atual"}
+                    </td>
+                    <td className="px-4 py-4 text-slate-400">
+                      Evoluir para rotas dedicadas, filtros, ações transacionais e formulários autenticados.
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       </div>
     </main>
