@@ -16,7 +16,7 @@ type TextFieldProps = {
   label: string;
   value: string;
   placeholder?: string;
-  type?: "text" | "number" | "date" | "datetime-local";
+  type?: "text" | "number" | "date" | "datetime-local" | "password";
   required?: boolean;
   onChange: (value: string) => void;
 };

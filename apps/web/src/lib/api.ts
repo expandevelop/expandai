@@ -11,7 +11,9 @@ import type {
   CommercialRule,
   Operator,
   Opportunity,
+  OperatorOnboardingPayload,
   Partner,
+  PartnerOnboardingPayload,
   ProductCatalog,
   ProductCatalogMutationPayload,
   Sale,
@@ -152,8 +154,48 @@ export function fetchOperators(accessToken: string) {
   return authenticatedRequest<Operator[]>("/operators", accessToken);
 }
 
+export function fetchOperatorById(accessToken: string, operatorId: string) {
+  return authenticatedRequest<Operator>(`/operators/${operatorId}`, accessToken);
+}
+
+export function createOperatorOnboarding(
+  accessToken: string,
+  payload: OperatorOnboardingPayload,
+) {
+  return authenticatedRequest<{
+    onboardingId: string;
+    actorType: string;
+    status: string;
+    userId: string;
+    operatorId: string;
+  }>("/onboarding/operators", accessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function fetchPartners(accessToken: string) {
   return authenticatedRequest<Partner[]>("/partners", accessToken);
+}
+
+export function fetchPartnerById(accessToken: string, partnerId: string) {
+  return authenticatedRequest<Partner>(`/partners/${partnerId}`, accessToken);
+}
+
+export function createPartnerOnboarding(
+  accessToken: string,
+  payload: PartnerOnboardingPayload,
+) {
+  return authenticatedRequest<{
+    onboardingId: string;
+    actorType: string;
+    status: string;
+    userId: string;
+    partnerId: string;
+  }>("/onboarding/partners", accessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function fetchClients(accessToken: string) {

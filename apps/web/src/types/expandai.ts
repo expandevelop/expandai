@@ -15,15 +15,45 @@ export type AuthSession = {
   user: AuthUser;
 };
 
+export type LinkedUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+};
+
+export type OnboardingRecord = {
+  id: string;
+  actorType: string;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type Operator = {
   id: string;
   userId?: string;
   legalName: string;
   tradeName: string;
   document?: string;
+  email?: string | null;
+  phone?: string | null;
+  commissionModel?: string | null;
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  user?: LinkedUser | null;
+  productCatalogs?: ProductCatalog[];
+  onboardings?: OnboardingRecord[];
+};
+
+export type OperatorOnboardingPayload = {
+  companyName: string;
+  document: string;
+  email: string;
+  phone?: string;
+  password: string;
 };
 
 export type Partner = {
@@ -32,9 +62,20 @@ export type Partner = {
   companyName: string;
   document?: string;
   partnerLevel?: string;
+  score?: string | number | null;
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  user?: LinkedUser | null;
+  onboardings?: OnboardingRecord[];
+};
+
+export type PartnerOnboardingPayload = {
+  companyName: string;
+  document: string;
+  email: string;
+  contactName?: string;
+  password: string;
 };
 
 export type Client = {
