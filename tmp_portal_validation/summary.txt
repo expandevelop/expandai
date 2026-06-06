@@ -1,0 +1,11 @@
+ExpandAI portal public validation
+target=http://34.73.25.196:3000
+
+/ 200
+/admin 200
+/admin/relatorios 200
+/partner 200
+/partner/relatorios 200
+/cliente 200
+/cliente/relatorios 200
+/clientes 200

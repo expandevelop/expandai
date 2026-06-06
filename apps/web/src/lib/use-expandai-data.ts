@@ -23,7 +23,7 @@ import type {
   Sale,
 } from "@/types/expandai";
 
-type DashboardData = {
+export type DashboardData = {
   operators: Operator[];
   partners: Partner[];
   clients: Client[];
