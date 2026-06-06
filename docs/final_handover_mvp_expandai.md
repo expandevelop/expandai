@@ -18,8 +18,8 @@ O backend publicado permanece como o núcleo transacional do sistema e responde 
 | Catálogo | CRUD operacional e página de detalhe | Concluído |
 | Operadoras | Onboarding administrativo e página de detalhe | Concluído |
 | Partners | Onboarding administrativo e página de detalhe | Concluído |
-| Clientes | Listagem dedicada e página de detalhe operacional | Concluído em código e validado localmente |
-| Publicação web | Frontend em ambiente persistente com `systemd` no cloud computer | Concluído com uma pendência operacional residual |
+| Clientes | Listagem dedicada e página de detalhe operacional | Concluído e validado em produção |
+| Publicação web | Frontend em ambiente persistente com `systemd` no cloud computer | Concluído e validado em produção |
 | QA integrada | Smoke test do MVP, validação de rotas, login, refresh e proteção por token | Concluído |
 
 ## URLs e ambientes relevantes
@@ -43,6 +43,7 @@ A reta final do MVP foi consolidada em checkpoints sequenciais, cada um com docu
 | 14 | Publicação persistente do frontend no cloud computer | Publicado |
 | 15 | Cobertura do módulo de clientes na camada web | Publicado |
 | 16 | Validação integrada e hardening final do MVP | Publicado |
+| 17 | Fechamento operacional final do deploy persistente | Publicado |
 
 ## Commits-chave da reta final
 
@@ -54,19 +55,20 @@ A reta final do MVP foi consolidada em checkpoints sequenciais, cada um com docu
 | `912a843` | Publicação persistente da camada web |
 | `fb84e02` | Cobertura web do módulo de clientes |
 | `bcb21ea` | Documentação da validação integrada e hardening final |
+| commit do checkpoint 17 | Fechamento operacional final do deploy persistente |
 
 ## Evidências de validação do MVP
 
-A validação integrada final confirmou que a API pública e a build local de produção da camada web estão consistentes com o código atual do repositório.
+A validação final confirmou que a API pública e o frontend persistente publicado estão consistentes com o código atual do repositório, incluindo a disponibilização pública da rota `/clientes` após a reconstrução do deploy.
 
 | Verificação | Resultado |
 | --- | --- |
-| Frontend local `/` | `200` |
-| Frontend local `/clientes` | `200` |
-| Frontend local `/catalogo` | `200` |
-| Frontend local `/oportunidades` | `200` |
-| Frontend local `/vendas` | `200` |
-| Frontend local `/financeiro` | `200` |
+| Frontend publicado `/` | `200` |
+| Frontend publicado `/clientes` | `200` |
+| Frontend publicado `/catalogo` | `200` |
+| Frontend publicado `/oportunidades` | `200` |
+| Frontend publicado `/vendas` | `200` |
+| Frontend publicado `/financeiro` | `200` |
 | Login administrativo via API pública | Sucesso |
 | `GET /users/me` com token válido | Sucesso |
 | `POST /auth/refresh` | Sucesso |
@@ -82,23 +84,19 @@ Os artefatos de apoio dessa validação permanecem no repositório local durante
 | Script de smoke test local | `scripts/validate_mvp_smoke_local.sh` |
 | Saída manual consolidada | `tmp_mvp_validation_manual/summary.txt` |
 | Verificações de hardening | `tmp_mvp_hardening/summary.txt` |
+| Smoke test público final | `tmp_mvp_validation/summary.txt` |
+| Fechamento operacional do deploy | `docs/status_checkpoint_17_deploy_final_fechamento.md` |
 
-## Pendência operacional residual
+## Fechamento operacional definitivo
 
-A única pendência aberta no fechamento do MVP não é de código funcional, mas de **sincronização operacional do frontend persistente**.
+A pendência operacional residual do frontend persistente foi resolvida no checkpoint final de deploy. O diagnóstico conclusivo identificou que o serviço `expandai-web` falhava porque a build remota do Next.js estava inconsistente e sem o arquivo `.next/BUILD_ID`, impedindo o `next start` de localizar uma build válida de produção.
 
-O serviço publicado em `http://34.73.25.196:3000` segue **ativo** e responde com sucesso na rota raiz. No entanto, após o checkpoint do módulo de clientes, a rota pública `/clientes` permaneceu retornando `404`, apesar de o módulo já estar implementado, versionado e validado em build de produção local. Isso indica que o host persistente **não recarregou integralmente a última build** ou permaneceu executando artefatos anteriores em memória.
+A correção aplicada consistiu em interromper o serviço, reconstruir integralmente o frontend em `/home/ubuntu/expandai/apps/web`, confirmar a geração do `BUILD_ID` e reiniciar a unidade `expandai-web.service`. Após essa intervenção, o serviço voltou ao estado **active (running)** e o frontend publicado passou a responder corretamente tanto na raiz quanto na rota `/clientes`.
 
-> Em outras palavras, o **MVP está pronto em código e validado funcionalmente**, mas o **frontend persistente precisa de um restart operacional final** para refletir plenamente a última versão já entregue no repositório.
-
-## Ação recomendada para fechamento operacional definitivo
-
-A ação residual recomendada é simples e objetiva: acessar o cloud computer que hospeda o frontend persistente, confirmar a build atual em `/home/ubuntu/expandai/apps/web` e executar um **restart do serviço `expandai-web`** após a recompilação final do frontend, caso necessário. Uma vez concluído esse restart, a expectativa é que a rota `/clientes` passe a refletir o mesmo comportamento já validado no ambiente local de produção.
+> Em outras palavras, o **MVP está concluído em código, build, operação persistente e acesso público**, sem pendências abertas de deploy ao final deste handover.
 
 ## Conclusão executiva
 
-O projeto **ExpandAI** chega ao encerramento deste ciclo com um **MVP operacional funcional**, autenticado, modular e pronto para demonstração e operação assistida. O conjunto principal de módulos foi implementado, a API já responde com segurança adequada para o escopo do MVP, a camada web foi publicada em ambiente persistente e a validação integrada confirmou o comportamento esperado dos fluxos centrais.
+O projeto **ExpandAI** encerra este ciclo com um **MVP operacional funcional**, autenticado, modular e efetivamente publicado. O conjunto principal de módulos foi implementado, a API responde com segurança adequada para o escopo do MVP, a camada web foi estabilizada em ambiente persistente e a validação final confirmou o comportamento esperado dos fluxos centrais em produção.
 
-A única divergência ainda aberta no momento do handover é **operacional e localizada**, sem comprometer a conclusão do desenvolvimento em si: o deploy persistente do frontend precisa ser reiniciado para refletir o módulo de clientes que já está pronto, publicado no repositório e validado localmente em produção.
-
-Com isso, o desenvolvimento do MVP pode ser considerado **concluído**, restando apenas esse ajuste final de publicação para alinhamento completo entre o repositório, a build validada localmente e o host persistente em produção.
+Com a recuperação do deploy persistente e a disponibilização pública do módulo de clientes, o desenvolvimento e o fechamento operacional do MVP podem ser considerados **integralmente concluídos**.
