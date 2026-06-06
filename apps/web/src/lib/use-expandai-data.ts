@@ -70,7 +70,8 @@ export function useExpandaiData(accessToken?: string | null, role?: string | nul
       visibleKeys.has("opportunities") ||
       visibleKeys.has("sales") ||
       visibleKeys.has("finance") ||
-      visibleKeys.has("catalog");
+      visibleKeys.has("catalog") ||
+      visibleKeys.has("clients");
 
     setIsLoading(true);
     setError(null);
@@ -84,7 +85,9 @@ export function useExpandaiData(accessToken?: string | null, role?: string | nul
           needsCommercialContext || visibleKeys.has("partners")
             ? fetchPartners(accessToken)
             : Promise.resolve([]),
-          needsCommercialContext ? fetchClients(accessToken) : Promise.resolve([]),
+          needsCommercialContext || visibleKeys.has("clients")
+            ? fetchClients(accessToken)
+            : Promise.resolve([]),
           needsCommercialContext || visibleKeys.has("catalog")
             ? fetchProductCatalogs(accessToken)
             : Promise.resolve([]),

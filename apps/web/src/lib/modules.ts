@@ -1,6 +1,7 @@
 export type DashboardModuleKey =
   | "operators"
   | "partners"
+  | "clients"
   | "catalog"
   | "opportunities"
   | "sales"
@@ -33,6 +34,15 @@ export const dashboardModules: DashboardModule[] = [
     endpoint: "/partners",
     href: "/partners",
     profiles: ["ADMIN", "OPERATOR", "PARTNER"],
+  },
+  {
+    key: "clients",
+    title: "Clientes",
+    description:
+      "Base de clientes do ecossistema com leitura operacional e vínculo aos fluxos comerciais.",
+    endpoint: "/clients",
+    href: "/clientes",
+    profiles: ["ADMIN", "OPERATOR", "PARTNER", "CLIENT"],
   },
   {
     key: "catalog",

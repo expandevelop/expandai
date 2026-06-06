@@ -202,6 +202,10 @@ export function fetchClients(accessToken: string) {
   return authenticatedRequest<Client[]>("/clients", accessToken);
 }
 
+export function fetchClientById(accessToken: string, clientId: string) {
+  return authenticatedRequest<Client>(`/clients/${clientId}`, accessToken);
+}
+
 export function fetchProductCatalogs(accessToken: string) {
   return authenticatedRequest<ProductCatalog[]>("/product-catalogs", accessToken);
 }

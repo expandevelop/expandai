@@ -87,6 +87,8 @@ export type Client = {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  user?: LinkedUser | null;
+  onboardings?: OnboardingRecord[];
 };
 
 export type ProductCatalog = {
