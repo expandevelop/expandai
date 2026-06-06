@@ -414,6 +414,21 @@ export function createBillingRecord(
   });
 }
 
+export function updateBillingRecord(
+  accessToken: string,
+  billingRecordId: string,
+  payload: BillingRecordMutationPayload,
+) {
+  return authenticatedRequest<BillingRecord>(
+    `/finance/billing-records/${billingRecordId}`,
+    accessToken,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
 export function payBillingRecord(accessToken: string, billingRecordId: string) {
   return authenticatedRequest<BillingRecord>(
     `/finance/billing-records/${billingRecordId}/pay`,

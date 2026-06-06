@@ -186,6 +186,166 @@ export class FinanceService {
   }
 
   async createBillingRecord(dto: CreateBillingRecordDto) {
+    const commercialRule = await this.validateBillingDependencies(dto);
+
+    const createdRecord = await this.prisma.billingRecord.create({
+      data: {
+        operatorId: dto.operatorId,
+        partnerId: dto.partnerId,
+        clientId: dto.clientId,
+        productCatalogId: dto.productCatalogId,
+        commercialRuleId: dto.commercialRuleId,
+        description: dto.description,
+        grossAmount: this.toDecimal(dto.grossAmount),
+        netAmount: dto.netAmount ? this.toDecimal(dto.netAmount) : null,
+        externalReference: dto.externalReference,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        status: BillingStatus.PENDING,
+        splitStatus: commercialRule ? SplitStatus.CALCULATED : SplitStatus.PENDING,
+      },
+    });
+
+    if (commercialRule) {
+      await this.createSplitAllocations(
+        createdRecord.id,
+        dto.grossAmount,
+        dto.operatorId,
+        dto.partnerId,
+        commercialRule,
+      );
+    }
+
+    return this.getBillingRecordOrThrow(createdRecord.id);
+  }
+
+  async updateBillingRecord(id: string, dto: CreateBillingRecordDto) {
+    const existing = await this.prisma.billingRecord.findUnique({
+      where: { id },
+      include: { splitAllocations: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Registro de faturamento não encontrado.');
+    }
+
+    if (existing.status === BillingStatus.PAYMENT_CONFIRMED) {
+      throw new BadRequestException(
+        'Não é possível editar um billing record já confirmado como pago.',
+      );
+    }
+
+    const commercialRule = await this.validateBillingDependencies(dto);
+
+    await this.prisma.billingRecord.update({
+      where: { id },
+      data: {
+        operatorId: dto.operatorId,
+        partnerId: dto.partnerId,
+        clientId: dto.clientId,
+        productCatalogId: dto.productCatalogId,
+        commercialRuleId: dto.commercialRuleId,
+        description: dto.description,
+        grossAmount: this.toDecimal(dto.grossAmount),
+        netAmount: dto.netAmount ? this.toDecimal(dto.netAmount) : null,
+        externalReference: dto.externalReference,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        splitStatus: commercialRule ? SplitStatus.CALCULATED : SplitStatus.PENDING,
+      },
+    });
+
+    if (existing.splitAllocations.length) {
+      await this.prisma.splitAllocation.deleteMany({
+        where: { billingRecordId: id },
+      });
+    }
+
+    if (commercialRule) {
+      await this.createSplitAllocations(
+        id,
+        dto.grossAmount,
+        dto.operatorId,
+        dto.partnerId,
+        commercialRule,
+      );
+    }
+
+    return this.getBillingRecordOrThrow(id);
+  }
+
+  async markAsPaid(id: string) {
+    const existing = await this.prisma.billingRecord.findUnique({
+      where: { id },
+      include: { splitAllocations: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Registro de faturamento não encontrado.');
+    }
+
+    await this.prisma.billingRecord.update({
+      where: { id },
+      data: {
+        status: BillingStatus.PAYMENT_CONFIRMED,
+        splitStatus: existing.splitAllocations.length
+          ? SplitStatus.RELEASED
+          : existing.splitStatus,
+        paidAt: new Date(),
+      },
+    });
+
+    if (existing.splitAllocations.length) {
+      await this.prisma.splitAllocation.updateMany({
+        where: { billingRecordId: id },
+        data: { status: SplitStatus.RELEASED },
+      });
+    }
+
+    return this.prisma.billingRecord.findUnique({
+      where: { id },
+      include: {
+        operator: {
+          select: {
+            id: true,
+            legalName: true,
+            tradeName: true,
+          },
+        },
+        partner: {
+          select: {
+            id: true,
+            companyName: true,
+            partnerLevel: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            companyName: true,
+            document: true,
+          },
+        },
+        productCatalog: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
+        },
+        commercialRule: {
+          select: {
+            id: true,
+            operatorPercentage: true,
+            partnerPercentage: true,
+            platformPercentage: true,
+            notes: true,
+          },
+        },
+        splitAllocations: true,
+      },
+    });
+  }
+
+  private async validateBillingDependencies(dto: CreateBillingRecordDto) {
     const operator = await this.prisma.operator.findUnique({
       where: { id: dto.operatorId },
       select: { id: true },
@@ -233,104 +393,10 @@ export class FinanceService {
       throw new NotFoundException('Regra comercial não encontrada.');
     }
 
-    const createdRecord = await this.prisma.billingRecord.create({
-      data: {
-        operatorId: dto.operatorId,
-        partnerId: dto.partnerId,
-        clientId: dto.clientId,
-        productCatalogId: dto.productCatalogId,
-        commercialRuleId: dto.commercialRuleId,
-        description: dto.description,
-        grossAmount: this.toDecimal(dto.grossAmount),
-        netAmount: dto.netAmount ? this.toDecimal(dto.netAmount) : null,
-        externalReference: dto.externalReference,
-        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
-        status: BillingStatus.PENDING,
-        splitStatus: commercialRule ? SplitStatus.CALCULATED : SplitStatus.PENDING,
-      },
-    });
-
-    if (commercialRule) {
-      await this.createSplitAllocations(
-        createdRecord.id,
-        dto.grossAmount,
-        dto.operatorId,
-        dto.partnerId,
-        commercialRule,
-      );
-    }
-
-    return this.prisma.billingRecord.findUnique({
-      where: { id: createdRecord.id },
-      include: {
-        operator: {
-          select: {
-            id: true,
-            legalName: true,
-            tradeName: true,
-          },
-        },
-        partner: {
-          select: {
-            id: true,
-            companyName: true,
-            partnerLevel: true,
-          },
-        },
-        client: {
-          select: {
-            id: true,
-            companyName: true,
-          },
-        },
-        productCatalog: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        commercialRule: {
-          select: {
-            id: true,
-            operatorPercentage: true,
-            partnerPercentage: true,
-            platformPercentage: true,
-            notes: true,
-          },
-        },
-        splitAllocations: true,
-      },
-    });
+    return commercialRule;
   }
 
-  async markAsPaid(id: string) {
-    const existing = await this.prisma.billingRecord.findUnique({
-      where: { id },
-      include: { splitAllocations: true },
-    });
-
-    if (!existing) {
-      throw new NotFoundException('Registro de faturamento não encontrado.');
-    }
-
-    await this.prisma.billingRecord.update({
-      where: { id },
-      data: {
-        status: BillingStatus.PAYMENT_CONFIRMED,
-        splitStatus: existing.splitAllocations.length
-          ? SplitStatus.RELEASED
-          : existing.splitStatus,
-        paidAt: new Date(),
-      },
-    });
-
-    if (existing.splitAllocations.length) {
-      await this.prisma.splitAllocation.updateMany({
-        where: { billingRecordId: id },
-        data: { status: SplitStatus.RELEASED },
-      });
-    }
-
+  private getBillingRecordOrThrow(id: string) {
     return this.prisma.billingRecord.findUnique({
       where: { id },
       include: {

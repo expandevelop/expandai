@@ -24,10 +24,12 @@ import {
   createBillingRecord,
   createCommercialRule,
   payBillingRecord,
+  updateBillingRecord,
 } from "@/lib/api";
 import { formatCompactDate, formatCurrency } from "@/lib/formatters";
 import { useFinanceWorkbench } from "@/lib/use-finance-workbench";
 import { usePersistedDraft } from "@/lib/use-persisted-draft";
+import type { BillingRecord, CommercialRule } from "@/types/expandai";
 
 const initialRuleDraft = {
   operatorId: "",
@@ -70,6 +72,22 @@ function toRequiredNumber(value: string) {
   return Number.isNaN(numericValue) ? NaN : numericValue;
 }
 
+function toDateTimeLocal(value?: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+}
+
 export default function FinancePage() {
   const { isBooting, session, currentUser } = useAuth();
   const {
@@ -91,6 +109,7 @@ export default function FinancePage() {
     draft: ruleDraft,
     isReady: isRuleReady,
     setDraftField: setRuleField,
+    replaceDraft: replaceRuleDraft,
     resetDraft: resetRuleDraft,
   } = usePersistedDraft("financeiro:commercial-rule-form", initialRuleDraft);
   const {
@@ -105,6 +124,8 @@ export default function FinancePage() {
   const [isSubmittingRule, setIsSubmittingRule] = useState(false);
   const [isSubmittingBilling, setIsSubmittingBilling] = useState(false);
   const [pendingBillingId, setPendingBillingId] = useState<string | null>(null);
+  const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
+  const [editingBillingId, setEditingBillingId] = useState<string | null>(null);
 
   const canAccess = visibleModules.some((module) => module.key === "finance");
   const saleOptions = useMemo(() => getSaleOptionsForBilling(), [getSaleOptionsForBilling]);
@@ -120,6 +141,69 @@ export default function FinancePage() {
     () => getCommercialRuleOptions(billingDraft.operatorId, billingDraft.productCatalogId),
     [billingDraft.operatorId, billingDraft.productCatalogId, getCommercialRuleOptions],
   );
+  const reconciliationTotals = useMemo(() => {
+    return data.billingRecords.reduce(
+      (accumulator, record) => {
+        const summary = summarizeBillingRecord(record);
+
+        return {
+          releasedAmount: accumulator.releasedAmount + summary.releasedAmount,
+          pendingAmount: accumulator.pendingAmount + summary.pendingAmount,
+          pendingRecords:
+            accumulator.pendingRecords +
+            (record.status === "PAYMENT_CONFIRMED" ? 0 : 1),
+        };
+      },
+      {
+        releasedAmount: 0,
+        pendingAmount: 0,
+        pendingRecords: 0,
+      },
+    );
+  }, [data.billingRecords, summarizeBillingRecord]);
+
+  function clearRuleEditor() {
+    setSelectedRuleId(null);
+    resetRuleDraft();
+  }
+
+  function clearBillingEditor() {
+    setEditingBillingId(null);
+    resetBillingDraft();
+  }
+
+  function handleLoadRuleForEdit(rule: CommercialRule) {
+    setSelectedRuleId(rule.id);
+    replaceRuleDraft({
+      operatorId: rule.operatorId,
+      productCatalogId: rule.productCatalogId,
+      operatorPercentage: String(rule.operatorPercentage ?? ""),
+      partnerPercentage: String(rule.partnerPercentage ?? ""),
+      platformPercentage: String(rule.platformPercentage ?? ""),
+      notes: rule.notes ?? "",
+    });
+    setFeedback(null);
+    setActionError(null);
+  }
+
+  function handleLoadBillingForEdit(record: BillingRecord) {
+    setEditingBillingId(record.id);
+    replaceBillingDraft({
+      saleId: "",
+      operatorId: record.operatorId ?? "",
+      partnerId: record.partnerId ?? "",
+      clientId: record.clientId ?? "",
+      productCatalogId: record.productCatalogId ?? "",
+      commercialRuleId: record.commercialRuleId ?? "",
+      description: record.description ?? "",
+      grossAmount: record.grossAmount ? String(record.grossAmount) : "",
+      netAmount: record.netAmount ? String(record.netAmount) : "",
+      externalReference: record.externalReference ?? "",
+      dueDate: toDateTimeLocal(record.dueDate),
+    });
+    setFeedback(null);
+    setActionError(null);
+  }
 
   async function handleCreateCommercialRule(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -164,7 +248,12 @@ export default function FinancePage() {
         platformPercentage,
         notes: toOptionalString(ruleDraft.notes),
       });
-      setFeedback("Regra comercial registrada com sucesso.");
+      setFeedback(
+        selectedRuleId
+          ? "Regra comercial atualizada com sucesso."
+          : "Regra comercial registrada com sucesso.",
+      );
+      clearRuleEditor();
       await reload();
     } catch (mutationError) {
       setActionError(
@@ -207,7 +296,11 @@ export default function FinancePage() {
       return;
     }
 
-    if (!billingDraft.operatorId || !billingDraft.description.trim() || !billingDraft.grossAmount.trim()) {
+    if (
+      !billingDraft.operatorId ||
+      !billingDraft.description.trim() ||
+      !billingDraft.grossAmount.trim()
+    ) {
       setActionError(
         "Preencha operadora, descrição e valor bruto antes de registrar o faturamento.",
       );
@@ -225,22 +318,32 @@ export default function FinancePage() {
     setFeedback(null);
     setActionError(null);
 
+    const payload = {
+      operatorId: billingDraft.operatorId,
+      partnerId: toOptionalString(billingDraft.partnerId),
+      clientId: toOptionalString(billingDraft.clientId),
+      productCatalogId: toOptionalString(billingDraft.productCatalogId),
+      commercialRuleId: toOptionalString(billingDraft.commercialRuleId),
+      description: billingDraft.description.trim(),
+      grossAmount,
+      netAmount: toOptionalNumber(billingDraft.netAmount),
+      externalReference: toOptionalString(billingDraft.externalReference),
+      dueDate: billingDraft.dueDate ? new Date(billingDraft.dueDate).toISOString() : undefined,
+    };
+
     try {
-      await createBillingRecord(session.accessToken, {
-        operatorId: billingDraft.operatorId,
-        partnerId: toOptionalString(billingDraft.partnerId),
-        clientId: toOptionalString(billingDraft.clientId),
-        productCatalogId: toOptionalString(billingDraft.productCatalogId),
-        commercialRuleId: toOptionalString(billingDraft.commercialRuleId),
-        description: billingDraft.description.trim(),
-        grossAmount,
-        netAmount: toOptionalNumber(billingDraft.netAmount),
-        externalReference: toOptionalString(billingDraft.externalReference),
-        dueDate: billingDraft.dueDate
-          ? new Date(billingDraft.dueDate).toISOString()
-          : undefined,
-      });
-      setFeedback("Billing record criado com sucesso.");
+      if (editingBillingId) {
+        await updateBillingRecord(session.accessToken, editingBillingId, payload);
+      } else {
+        await createBillingRecord(session.accessToken, payload);
+      }
+
+      setFeedback(
+        editingBillingId
+          ? "Billing record atualizado com sucesso."
+          : "Billing record criado com sucesso.",
+      );
+      clearBillingEditor();
       await reload();
     } catch (mutationError) {
       setActionError(
@@ -295,7 +398,7 @@ export default function FinancePage() {
     <AppShell
       eyebrow="Financeiro e split"
       title="Billing records e regras comerciais"
-      description="Esta rota agora vai além da leitura inicial e passa a oferecer registro de regras comerciais, criação assistida de billing records e liquidação operacional autenticada."
+      description="Esta rota agora combina cadastro, edição estruturada, reconciliação ampliada e navegação contextual do ciclo financeiro da operação."
     >
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
       {actionError ? <InlineMessage tone="error">{actionError}</InlineMessage> : null}
@@ -303,7 +406,7 @@ export default function FinancePage() {
 
       {canAccess ? (
         <>
-          <section className="grid gap-4 md:grid-cols-3">
+          <section className="grid gap-4 md:grid-cols-4">
             <MetricCard
               label="Billing records confirmados"
               value={String(
@@ -313,31 +416,26 @@ export default function FinancePage() {
             />
             <MetricCard
               label="Split liberado"
-              value={formatCurrency(
-                data.billingRecords.reduce((accumulator, record) => {
-                  const releasedAmount = (record.splitAllocations ?? []).reduce((sum, allocation) => {
-                    return allocation.status === "RELEASED"
-                      ? sum + Number(allocation.amount)
-                      : sum;
-                  }, 0);
-
-                  return accumulator + releasedAmount;
-                }, 0),
-              )}
+              value={formatCurrency(reconciliationTotals.releasedAmount)}
               description="Soma das alocações já liberadas nos billing records retornados pela API."
             />
             <MetricCard
-              label="Regras comerciais"
-              value={String(data.commercialRules.length)}
-              description="Quantidade de regras de split e distribuição disponíveis nesta visão."
+              label="Split pendente"
+              value={formatCurrency(reconciliationTotals.pendingAmount)}
+              description="Montante ainda pendente de reconciliação ou liberação operacional."
+            />
+            <MetricCard
+              label="Cobranças pendentes"
+              value={String(reconciliationTotals.pendingRecords)}
+              description="Billing records ainda não confirmados como pagos na visão corrente."
             />
           </section>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-2">
             <FormCard
               eyebrow="Regra comercial"
-              title="Cadastrar ou atualizar distribuição"
-              description="A regra comercial é persistida diretamente na API e usa validação client-side complementar para garantir percentuais coerentes antes do envio."
+              title={selectedRuleId ? "Editar distribuição" : "Cadastrar ou atualizar distribuição"}
+              description="A regra comercial é persistida diretamente na API e agora pode ser reaberta para edição assistida a partir da lista operacional abaixo."
             >
               <form onSubmit={(event) => void handleCreateCommercialRule(event)}>
                 <FormGrid>
@@ -383,18 +481,18 @@ export default function FinancePage() {
                 </FormGrid>
 
                 <FormActions
-                  submitLabel="Salvar regra comercial"
-                  resetLabel="Limpar rascunho"
+                  submitLabel={selectedRuleId ? "Atualizar regra comercial" : "Salvar regra comercial"}
+                  resetLabel={selectedRuleId ? "Cancelar edição" : "Limpar rascunho"}
                   isSubmitting={isSubmittingRule}
-                  onReset={resetRuleDraft}
+                  onReset={clearRuleEditor}
                 />
               </form>
             </FormCard>
 
             <FormCard
               eyebrow="Billing record"
-              title="Registrar faturamento operacional"
-              description="O formulário pode ser iniciado a partir de uma venda existente para reaproveitar vínculos comerciais e reduzir retrabalho operacional."
+              title={editingBillingId ? "Editar faturamento operacional" : "Registrar faturamento operacional"}
+              description="O formulário pode ser iniciado a partir de uma venda existente, reaberto para edição e usado para recalcular o split conforme a regra comercial vigente."
             >
               <form onSubmit={(event) => void handleCreateBillingRecord(event)}>
                 <FormGrid>
@@ -476,10 +574,10 @@ export default function FinancePage() {
                 </FormGrid>
 
                 <FormActions
-                  submitLabel="Criar billing record"
-                  resetLabel="Limpar rascunho"
+                  submitLabel={editingBillingId ? "Atualizar billing record" : "Criar billing record"}
+                  resetLabel={editingBillingId ? "Cancelar edição" : "Limpar rascunho"}
                   isSubmitting={isSubmittingBilling}
-                  onReset={resetBillingDraft}
+                  onReset={clearBillingEditor}
                 />
               </form>
             </FormCard>
@@ -491,7 +589,7 @@ export default function FinancePage() {
                 <SectionHeader
                   eyebrow="Regras comerciais"
                   title="Distribuição entre operadora, partner e plataforma"
-                  description="A visão abaixo já reflete o resultado do novo fluxo de cadastro assistido, permitindo governança inicial do split comercial."
+                  description="A visão abaixo já permite governança mais madura do split, com reabertura assistida da regra para nova configuração operacional."
                 />
                 <button
                   className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
@@ -510,17 +608,28 @@ export default function FinancePage() {
                       key={rule.id}
                       className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4"
                     >
-                      <h3 className="text-sm font-semibold text-white">
-                        {rule.productCatalog?.name ?? "Regra sem produto associado"}
-                      </h3>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-semibold text-white">
+                            {rule.productCatalog?.name ?? "Regra sem produto associado"}
+                          </h3>
+                          <p className="mt-2 text-xs text-slate-500">
+                            Operadora: {rule.operator?.tradeName ?? "—"}
+                          </p>
+                        </div>
+                        <button
+                          className="inline-flex rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-medium text-amber-100 transition hover:bg-amber-500/20"
+                          type="button"
+                          onClick={() => handleLoadRuleForEdit(rule)}
+                        >
+                          Editar regra
+                        </button>
+                      </div>
                       <div className="mt-3 grid gap-2 text-sm text-slate-300 sm:grid-cols-3">
                         <p>Operadora: {rule.operatorPercentage}%</p>
                         <p>Partner: {rule.partnerPercentage}%</p>
                         <p>Plataforma: {rule.platformPercentage}%</p>
                       </div>
-                      <p className="mt-3 text-xs text-slate-500">
-                        Operadora: {rule.operator?.tradeName ?? "—"}
-                      </p>
                       {rule.notes ? (
                         <p className="mt-2 text-xs leading-5 text-slate-500">{rule.notes}</p>
                       ) : null}
@@ -541,7 +650,7 @@ export default function FinancePage() {
               <SectionHeader
                 eyebrow="Billing records"
                 title="Cobranças sincronizadas com a operação"
-                description="Os registros abaixo passam a coexistir com criação assistida e liquidação operacional autenticada diretamente no frontend."
+                description="Os registros abaixo agora coexistem com criação assistida, reabertura para edição, liquidação e navegação contextual para detalhe por cobrança."
               />
               {data.billingRecords.length > 0 ? (
                 <div className="mt-6 space-y-4">
@@ -574,11 +683,23 @@ export default function FinancePage() {
                           <p>Partner: {record.partner?.companyName ?? "—"}</p>
                           <p>Pago em: {formatCompactDate(record.paidAt)}</p>
                           <p>Vencimento: {formatCompactDate(record.dueDate)}</p>
-                          <p>Split liberado: {summary.releasedAllocations}/{summary.totalAllocations}</p>
+                          <p>
+                            Split liberado: {summary.releasedAllocations}/{summary.totalAllocations}
+                          </p>
+                          <p>Saldo liberado: {formatCurrency(summary.releasedAmount)}</p>
+                          <p>Saldo pendente: {formatCurrency(summary.pendingAmount)}</p>
                           <p>Regra comercial: {summary.hasCommercialRule ? "Aplicada" : "Não vinculada"}</p>
                           <p>Referência: {record.externalReference ?? "—"}</p>
                         </div>
                         <div className="mt-5 flex flex-wrap gap-3">
+                          <button
+                            className="inline-flex rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-100 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            type="button"
+                            onClick={() => handleLoadBillingForEdit(record)}
+                            disabled={record.status === "PAYMENT_CONFIRMED"}
+                          >
+                            Editar billing
+                          </button>
                           <button
                             className="inline-flex rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                             type="button"

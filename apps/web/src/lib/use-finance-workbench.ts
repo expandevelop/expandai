@@ -114,12 +114,23 @@ export function useFinanceWorkbench(accessToken?: string | null, role?: string |
   function summarizeBillingRecord(record: BillingRecord) {
     const releasedAllocations = (record.splitAllocations ?? []).filter(
       (allocation) => allocation.status === "RELEASED",
-    ).length;
+    );
+    const pendingAllocations = (record.splitAllocations ?? []).filter(
+      (allocation) => allocation.status !== "RELEASED",
+    );
 
     return {
-      releasedAllocations,
+      releasedAllocations: releasedAllocations.length,
       totalAllocations: record.splitAllocations?.length ?? 0,
       hasCommercialRule: Boolean(record.commercialRuleId),
+      releasedAmount: releasedAllocations.reduce(
+        (sum, allocation) => sum + Number(allocation.amount),
+        0,
+      ),
+      pendingAmount: pendingAllocations.reduce(
+        (sum, allocation) => sum + Number(allocation.amount),
+        0,
+      ),
     };
   }
 

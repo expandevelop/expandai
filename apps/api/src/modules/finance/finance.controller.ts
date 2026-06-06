@@ -54,6 +54,14 @@ export class FinanceController {
     return this.financeService.createBillingRecord(dto);
   }
 
+  @Patch('billing-records/:id')
+  @ApiOperation({ summary: 'Atualizar um registro de faturamento e recalcular seu split.' })
+  @ApiParam({ name: 'id', description: 'Identificador do registro de faturamento.' })
+  @ApiOkResponse({ description: 'Registro de faturamento atualizado com sucesso.' })
+  updateBillingRecord(@Param('id') id: string, @Body() dto: CreateBillingRecordDto) {
+    return this.financeService.updateBillingRecord(id, dto);
+  }
+
   @Patch('billing-records/:id/pay')
   @ApiOperation({ summary: 'Marcar um registro de faturamento como pago e liberar o split.' })
   @ApiParam({ name: 'id', description: 'Identificador do registro de faturamento.' })
