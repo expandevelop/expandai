@@ -1,5 +1,5 @@
 import { PortalDashboard } from "@/components/portal-dashboard";
 
-export default function AdminPortalPage() {
+export default function ExpandPage() {
   return <PortalDashboard portalKey="expand" />;
 }

@@ -22,6 +22,14 @@ type PortalDashboardProps = {
   portalKey: PortalKey;
 };
 
+function buildPreviewMessage(portalBadge: string, sessionRole?: string, experienceRole?: string) {
+  if (!sessionRole || !experienceRole || sessionRole === experienceRole) {
+    return null;
+  }
+
+  return `Prévia de usabilidade em modo ${portalBadge}. A sessão atual está autenticada como ${sessionRole}, mas a experiência visual foi desenhada para ${experienceRole}.`;
+}
+
 export function PortalDashboard({ portalKey }: PortalDashboardProps) {
   const portal = portalConfigs[portalKey];
   const { isBooting, session, currentUser } = useAuth();
@@ -29,16 +37,13 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
   const { data, isLoading, error } = useExpandaiData(session?.accessToken, portal.experienceRole);
 
   const snapshot = useMemo(() => buildPortalSnapshot(portalKey, data), [data, portalKey]);
-  const previewMessage =
-    currentUser && currentUser.role !== portal.experienceRole
-      ? `Prévia de usabilidade em modo ${portal.badge}. A sessão atual está autenticada como ${currentUser.role}, mas a experiência visual foi montada para ${portal.experienceRole}.`
-      : null;
+  const previewMessage = buildPreviewMessage(portal.badge, currentUser?.role, portal.experienceRole);
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="min-h-screen bg-slate-50 text-slate-900">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-300">Carregando portal {portal.badge.toLowerCase()}...</p>
+          <p className="text-sm text-slate-500">Carregando portal {portal.badge.toLowerCase()}...</p>
         </div>
       </main>
     );
@@ -54,35 +59,36 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
         portal={portal}
         currentUser={currentUser}
         title={portal.subtitle}
-        description="Esta nova superfície foi desenhada para testes de usabilidade, com linguagem mais moderna, navegação contextual, painéis executivos e atalhos para os aplicativos operacionais já existentes da ExpandAI."
+        description="Esta superfície foi redesenhada para testes de usabilidade, com linguagem mais limpa, navegação contextual e acesso claro aos aplicativos operacionais já existentes da ExpandAI."
         previewMessage={previewMessage}
-        actionSlot={
-          <>
-            <button
-              className="inline-flex rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
-              onClick={() => setActiveModal("prioridades")}
-              type="button"
-            >
-              Ver prioridades
-            </button>
-            <button
-              className="inline-flex rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
-              onClick={() => setActiveModal("apps")}
-              type="button"
-            >
-              Abrir aplicativos
-            </button>
-            <Link
-              href={portal.reportsRoute}
-              className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20"
-            >
-              Ver relatórios
-            </Link>
-          </>
-        }
+        actionSlot={[
+          <button
+            key="prioridades"
+            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+            onClick={() => setActiveModal("prioridades")}
+            type="button"
+          >
+            Ver prioridades
+          </button>,
+          <button
+            key="apps"
+            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+            onClick={() => setActiveModal("apps")}
+            type="button"
+          >
+            Abrir aplicativos
+          </button>,
+          <Link
+            key="relatorios"
+            href={portal.reportsRoute}
+            className="inline-flex rounded-2xl border border-[#16a34a]/20 bg-[#16a34a]/10 px-4 py-3 text-sm font-medium text-[#0f5132] transition hover:bg-[#16a34a]/15"
+          >
+            Ver relatórios
+          </Link>,
+        ]}
       >
         {error ? (
-          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </div>
         ) : null}
@@ -102,7 +108,7 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
           <SectionCard
             eyebrow="Destaques operacionais"
             title="Itens prioritários para acompanhamento"
-            description="A interface prioriza leitura rápida, densidade controlada e ações contextualizadas para facilitar testes de usabilidade antes da homologação formal."
+            description="A leitura foi reorganizada para privilegiar foco, entendimento rápido do contexto e ação imediata sem excesso de blocos concorrentes na tela."
           >
             <SpotlightList items={snapshot.spotlights} />
           </SectionCard>
@@ -110,7 +116,7 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
           <SectionCard
             eyebrow="Resumo executivo"
             title="Indicadores rápidos do portal"
-            description="Esses cartões funcionam como leitura curta para o usuário entender imediatamente o estado da sua operação e do relacionamento com a plataforma."
+            description="Esses cartões funcionam como leitura curta para que cada perfil entenda imediatamente o estado da sua operação e do relacionamento com a plataforma."
           >
             <QuickFactGrid items={snapshot.quickFacts} />
           </SectionCard>
@@ -154,15 +160,16 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
       <PortalModal
         open={activeModal === "prioridades"}
         title={`Prioridades do ${portal.title}`}
-        description="Esta modal resume o que o usuário deve enxergar primeiro ao testar a usabilidade desta experiência."
+        description="Esta modal resume aquilo que o usuário deve perceber primeiro ao testar a usabilidade desta experiência."
         onClose={() => setActiveModal(null)}
+        portalLabel={portal.title}
       >
         <div className="space-y-4">
           {snapshot.reportRows.map((row) => (
-            <div key={row.label} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{row.label}</p>
-              <p className="mt-3 text-2xl font-semibold text-white">{row.primary}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">{row.secondary}</p>
+            <div key={row.label} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{row.label}</p>
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{row.primary}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{row.secondary}</p>
             </div>
           ))}
         </div>
@@ -171,19 +178,20 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
       <PortalModal
         open={activeModal === "apps"}
         title={`Aplicativos do ${portal.title}`}
-        description="Os aplicativos operacionais já existentes foram preservados e organizados como extensões naturais do portal para navegação funcional e testes de fluxo."
+        description="Os aplicativos operacionais já existentes foram reorganizados como extensões naturais do portal para navegação funcional e testes de fluxo."
         onClose={() => setActiveModal(null)}
+        portalLabel={portal.title}
       >
         <div className="grid gap-4 md:grid-cols-2">
           {portal.legacyModules.map((module) => (
             <Link
               key={module.href}
               href={module.href}
-              className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 transition hover:border-white/20 hover:bg-white/[0.04]"
+              className="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-slate-300 hover:bg-white"
             >
-              <p className="text-lg font-semibold text-white">{module.label}</p>
-              <p className="mt-3 text-sm leading-6 text-slate-400">{module.description}</p>
-              <p className="mt-4 text-xs uppercase tracking-[0.2em] text-cyan-200">Abrir módulo</p>
+              <p className="text-lg font-semibold text-slate-950">{module.label}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{module.description}</p>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#16a34a]">Abrir módulo</p>
             </Link>
           ))}
         </div>

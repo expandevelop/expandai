@@ -18,71 +18,75 @@ export function LoginScreen() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10 lg:px-10">
-        <section className="grid w-full gap-6 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-slate-950/30 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-5">
-            <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              ExpandAI Platform
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] text-slate-900">
+      <div className="mx-auto flex min-h-screen max-w-7xl items-center px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <section className="grid w-full gap-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,29,47,0.08)] lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="bg-[linear-gradient(135deg,#0f1d2f_0%,#1e3a5f_55%,#16a34a_100%)] p-8 text-white lg:p-12">
+            <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/90">
+              Expand AI
             </span>
-            <div className="space-y-3">
-              <h1 className="text-4xl font-semibold tracking-tight text-white lg:text-5xl">
-                Camada web autenticada pronta para operar sobre a API real da ExpandAI.
+            <div className="mt-6 space-y-4">
+              <h1 className="max-w-3xl text-4xl font-semibold tracking-tight lg:text-5xl">
+                Uma plataforma mais clara para orquestrar expansão comercial.
               </h1>
-              <p className="max-w-3xl text-sm leading-7 text-slate-300 lg:text-base">
-                Esta etapa organiza a aplicação em um <strong>app shell modular</strong>, com
-                login persistido em <strong>local storage</strong>, navegação por perfil e base
-                pronta para rotas dedicadas dos módulos de negócio.
+              <p className="max-w-2xl text-sm leading-8 text-white/85 lg:text-base">
+                A nova experiência organiza a operação em portais separados para Expand, Operadora, Partner e Cliente Final, com foco em navegação simples, leitura objetiva e usabilidade moderna.
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <article className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Sessão</p>
-                <p className="mt-2 text-sm font-medium text-white">JWT persistido localmente</p>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-3">
+              <article className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Acesso</p>
+                <p className="mt-3 text-sm font-semibold text-white">Entrada autenticada por perfil</p>
               </article>
-              <article className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Navegação</p>
-                <p className="mt-2 text-sm font-medium text-white">Rotas por módulo e perfil</p>
+              <article className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Experiência</p>
+                <p className="mt-3 text-sm font-semibold text-white">Portais limpos e segmentados</p>
               </article>
-              <article className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Próxima fase</p>
-                <p className="mt-2 text-sm font-medium text-white">CRUDs e fluxos transacionais</p>
+              <article className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Objetivo</p>
+                <p className="mt-3 text-sm font-semibold text-white">Testar usabilidade antes da homologação</p>
               </article>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6">
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-white">Entrar na operação</h2>
-                <p className="text-sm leading-6 text-slate-400">
-                  Utilize uma credencial habilitada para carregar os módulos protegidos da plataforma.
+          <div className="p-6 lg:p-12">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#16a34a]">Acesso à plataforma</p>
+                <h2 className="text-3xl font-semibold tracking-tight text-slate-950">Entrar na operação</h2>
+                <p className="text-sm leading-7 text-slate-600">
+                  Utilize uma credencial habilitada para acessar os portais protegidos da ExpandAI com leitura por perfil e navegação segmentada.
                 </p>
               </div>
-              <div className="space-y-4">
+
+              <div className="space-y-5">
                 <label className="block space-y-2">
-                  <span className="text-sm font-medium text-slate-200">E-mail</span>
+                  <span className="text-sm font-medium text-slate-700">E-mail</span>
                   <input
-                    className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#16a34a]"
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="admin@expandai.com"
+                    aria-label="E-mail"
                   />
                 </label>
                 <label className="block space-y-2">
-                  <span className="text-sm font-medium text-slate-200">Senha</span>
+                  <span className="text-sm font-medium text-slate-700">Senha</span>
                   <input
-                    className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#16a34a]"
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Digite a senha de acesso"
+                    aria-label="Senha"
                   />
                 </label>
               </div>
+
               <button
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-[#16a34a] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-60"
                 type="submit"
                 disabled={isSubmitting}
               >

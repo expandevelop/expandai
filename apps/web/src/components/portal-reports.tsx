@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { LoginScreen } from "@/components/login-screen";
-import {
-  PortalModal,
-  PortalShell,
-  QuickFactGrid,
-  ReportTable,
-  SectionCard,
-  TrendBars,
-} from "@/components/portal-ui";
+import { PortalModal, PortalShell, ReportTable, SectionCard, TrendBars } from "@/components/portal-ui";
 import { useAuth } from "@/components/auth-provider";
 import { buildPortalSnapshot } from "@/lib/portal-analytics";
 import { portalConfigs, type PortalKey } from "@/lib/portal-config";
@@ -20,22 +13,27 @@ type PortalReportsProps = {
   portalKey: PortalKey;
 };
 
+function buildPreviewMessage(portalBadge: string, sessionRole?: string, experienceRole?: string) {
+  if (!sessionRole || !experienceRole || sessionRole === experienceRole) {
+    return null;
+  }
+
+  return `Prévia de usabilidade em modo ${portalBadge}. A sessão atual está autenticada como ${sessionRole}, mas a experiência visual foi desenhada para ${experienceRole}.`;
+}
+
 export function PortalReports({ portalKey }: PortalReportsProps) {
   const portal = portalConfigs[portalKey];
   const { isBooting, session, currentUser } = useAuth();
-  const { data, isLoading, error } = useExpandaiData(session?.accessToken, portal.experienceRole);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
+  const { data, isLoading, error } = useExpandaiData(session?.accessToken, portal.experienceRole);
   const snapshot = useMemo(() => buildPortalSnapshot(portalKey, data), [data, portalKey]);
-  const previewMessage =
-    currentUser && currentUser.role !== portal.experienceRole
-      ? `Relatório em modo prévia para ${portal.experienceRole}. A sessão atual está autenticada como ${currentUser.role}.`
-      : null;
+  const previewMessage = buildPreviewMessage(portal.badge, currentUser?.role, portal.experienceRole);
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="min-h-screen bg-slate-50 text-slate-900">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-300">Carregando relatórios do portal...</p>
+          <p className="text-sm text-slate-500">Carregando relatórios do portal...</p>
         </div>
       </main>
     );
@@ -51,89 +49,100 @@ export function PortalReports({ portalKey }: PortalReportsProps) {
         portal={portal}
         currentUser={currentUser}
         title={`Relatórios do ${portal.title}`}
-        description="Esta área organiza leituras analíticas curtas, comparativos e resumos operacionais para que a experiência já esteja pronta para testes de usabilidade e percepção de valor antes da homologação final."
+        description="A camada analítica foi redesenhada para privilegiar clareza, leitura executiva e comparação rápida, reduzindo ruído visual e mantendo o contexto do portal atual."
         previewMessage={previewMessage}
-        actionSlot={
-          <>
-            <button
-              className="inline-flex rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
-              onClick={() => setIsMethodologyOpen(true)}
-              type="button"
-            >
-              Como ler este relatório
-            </button>
-            <Link
-              href={portal.route}
-              className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20"
-            >
-              Voltar ao dashboard
-            </Link>
-          </>
-        }
+        actionSlot={[
+          <button
+            key="metodologia"
+            type="button"
+            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+            onClick={() => setIsMethodologyOpen(true)}
+          >
+            Ver metodologia
+          </button>,
+          <Link
+            key="dashboard"
+            href={portal.route}
+            className="inline-flex rounded-2xl border border-[#16a34a]/20 bg-[#16a34a]/10 px-4 py-3 text-sm font-medium text-[#0f5132] transition hover:bg-[#16a34a]/15"
+          >
+            Voltar ao dashboard
+          </Link>,
+        ]}
       >
         {error ? (
-          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </div>
         ) : null}
 
-        <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <SectionCard
-            eyebrow="Resumo consolidado"
-            title="Indicadores centrais do portal"
-            description="A tabela abaixo prioriza a leitura objetiva dos números mais importantes para o perfil, reduzindo atrito cognitivo durante testes iniciais de entendimento e valor percebido."
+            eyebrow="Leitura principal"
+            title="Indicadores centrais desta visão"
+            description="A tabela abaixo resume os principais indicadores prontos para exploração dentro do contexto autenticado atual."
           >
             <ReportTable rows={snapshot.reportRows} />
           </SectionCard>
 
           <SectionCard
-            eyebrow="Painel resumido"
-            title="Facts rápidos para apoio de decisão"
-            description="Esta faixa resume indicadores auxiliares que ajudam a ancorar a leitura analítica sem exigir navegação profunda em múltiplas páginas."
+            eyebrow="Situação do pipeline"
+            title="Distribuição das oportunidades"
+            description="Esta leitura resume o volume de oportunidades por estágio na visão atual, preservando entendimento rápido do funil."
           >
-            <QuickFactGrid items={snapshot.quickFacts} />
+            <TrendBars
+              title={isLoading ? "Atualizando leitura analítica..." : "Oportunidades por estágio"}
+              description="A distribuição considera apenas os registros visíveis ao contexto atual."
+              items={snapshot.stageDistribution}
+            />
           </SectionCard>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
           <SectionCard
-            eyebrow="Funil e jornada"
-            title="Distribuição das oportunidades"
-            description="Leitura compacta das etapas mais recorrentes do funil disponível ao portal."
+            eyebrow="Conversão"
+            title="Status das vendas"
+            description="Comparativo compacto dos estados comerciais mais frequentes nesta visão analítica."
           >
             <TrendBars
-              title={isLoading ? "Atualizando distribuição..." : "Oportunidades por estágio"}
-              description="A comparação visual facilita perceber concentração de etapas e necessidade de ação comercial."
-              items={snapshot.stageDistribution}
+              title={isLoading ? "Atualizando leitura comercial..." : "Vendas por status"}
+              description="Leitura resumida dos estados de fechamento comercial disponíveis na base atual."
+              items={snapshot.salesDistribution}
             />
           </SectionCard>
 
           <SectionCard
-            eyebrow="Faturamento e conversão"
-            title="Distribuição dos status de venda"
-            description="Leitura sintética do comportamento dos registros comerciais retornados pela API para este portal."
+            eyebrow="Leituras rápidas"
+            title="Aspectos de atenção para o portal"
+            description="Os destaques abaixo funcionam como uma síntese objetiva dos temas que mais importam para a tomada de decisão neste perfil."
           >
-            <TrendBars
-              title={isLoading ? "Atualizando vendas..." : "Vendas por status"}
-              description="A distribuição serve como base para relatórios operacionais e validação de usabilidade da leitura analítica."
-              items={snapshot.salesDistribution}
-            />
+            <div className="space-y-4">
+              {snapshot.quickFacts.map((fact) => (
+                <article key={fact.label} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{fact.label}</p>
+                  <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{fact.value}</p>
+                </article>
+              ))}
+            </div>
           </SectionCard>
         </section>
       </PortalShell>
 
       <PortalModal
         open={isMethodologyOpen}
-        title="Como interpretar esta área de relatórios"
-        description="Os relatórios desta etapa foram desenhados para oferecer leitura executiva curta, boa hierarquia visual e navegação simples, usando os dados reais já disponíveis na ExpandAI."
+        title={`Metodologia dos relatórios do ${portal.title}`}
+        description="Os relatórios refletem os mesmos dados carregados na experiência do portal, reorganizados em leituras executivas, distribuições e indicadores rápidos para facilitar testes de compreensão e navegação."
         onClose={() => setIsMethodologyOpen(false)}
+        portalLabel={portal.title}
       >
-        <div className="space-y-4 text-sm leading-7 text-slate-300">
+        <div className="space-y-4 text-sm leading-7 text-slate-600">
           <p>
-            A primeira faixa organiza indicadores principais para leitura imediata. Em seguida, a tela apresenta fatos rápidos e distribuições visuais que ajudam a identificar concentração de estados, volume operacional e possíveis gargalos.
+            As métricas resumem apenas os registros carregados pela sessão autenticada e pelo escopo visível ao perfil atual.
           </p>
           <p>
-            Essa estrutura foi pensada para testes de usabilidade: primeiro entendimento rápido, depois aprofundamento progressivo, sem exigir que o usuário percorra muitos módulos antes de perceber valor.
+            As distribuições utilizam agrupamentos simples por estágio e status, priorizando leitura rápida e comparação imediata.
+          </p>
+          <p>
+            Os destaques e fatos rápidos foram organizados para reduzir ruído visual e facilitar a validação de usabilidade antes da rodada formal de homologação.
           </p>
         </div>
       </PortalModal>

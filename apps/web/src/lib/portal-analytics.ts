@@ -1,4 +1,11 @@
-import type { BillingRecord, Client, CommercialRule, Opportunity, ProductCatalog, Sale } from "@/types/expandai";
+import type {
+  BillingRecord,
+  Client,
+  CommercialRule,
+  Opportunity,
+  ProductCatalog,
+  Sale,
+} from "@/types/expandai";
 import type { DashboardData } from "@/lib/use-expandai-data";
 import type { PortalKey } from "@/lib/portal-config";
 import { formatCurrency } from "@/lib/formatters";
@@ -95,6 +102,15 @@ function buildClientSpotlights(clients: Client[]): SpotlightItem[] {
   }));
 }
 
+function buildOperatorSpotlights(operators: DashboardData["operators"]): SpotlightItem[] {
+  return operators.slice(0, 4).map((operator) => ({
+    title: operator.tradeName,
+    eyebrow: operator.legalName,
+    description: `Status ${operator.status} e contato ${operator.email ?? "não informado"}.`,
+    status: operator.status,
+  }));
+}
+
 function buildCatalogSpotlights(catalogs: ProductCatalog[]): SpotlightItem[] {
   return catalogs.slice(0, 4).map((catalog) => ({
     title: catalog.name,
@@ -140,6 +156,62 @@ export function buildPortalSnapshot(portalKey: PortalKey, data: DashboardData): 
   );
   const stageDistribution = toBarData(groupCounts(data.opportunities.map((item) => item.stage)));
   const salesDistribution = toBarData(groupCounts(data.sales.map((item) => item.status)));
+
+  if (portalKey === "operadora") {
+    return {
+      metrics: [
+        {
+          label: "Operadoras monitoradas",
+          value: String(data.operators.length),
+          description: "Entidades operacionais disponíveis para a visão autenticada.",
+        },
+        {
+          label: "Catálogo ativo",
+          value: String(activeCatalogs.length),
+          description: "Produtos ativos ou pendentes vinculados à operação.",
+        },
+        {
+          label: "Oportunidades abertas",
+          value: String(openOpportunities.length),
+          description: "Fluxos comerciais ainda em curso dentro da visão da operadora.",
+        },
+        {
+          label: "Faturamento observado",
+          value: toCurrency(sumNumeric(data.billingRecords.map((record) => record.grossAmount))),
+          description: "Volume financeiro disponível para leitura operacional.",
+        },
+      ],
+      spotlights:
+        buildOperatorSpotlights(data.operators).length > 0
+          ? buildOperatorSpotlights(data.operators)
+          : buildCatalogSpotlights(data.productCatalogs),
+      stageDistribution,
+      salesDistribution,
+      reportRows: [
+        {
+          label: "Catálogos disponíveis",
+          primary: String(activeCatalogs.length),
+          secondary: `${data.productCatalogs.length} itens carregados na camada web`,
+        },
+        {
+          label: "Pipeline em andamento",
+          primary: String(openOpportunities.length),
+          secondary: `${data.opportunities.length} oportunidades monitoradas`,
+        },
+        {
+          label: "Registros financeiros",
+          primary: String(data.billingRecords.length),
+          secondary: `${confirmedBillings.length} pagamentos confirmados`,
+        },
+      ],
+      quickFacts: [
+        { label: "Operadoras", value: String(data.operators.length) },
+        { label: "Catálogos", value: String(data.productCatalogs.length) },
+        { label: "Vendas", value: String(data.sales.length) },
+        { label: "Billing", value: String(data.billingRecords.length) },
+      ],
+    };
+  }
 
   if (portalKey === "partner") {
     return {
@@ -190,8 +262,14 @@ export function buildPortalSnapshot(portalKey: PortalKey, data: DashboardData): 
       ],
       quickFacts: [
         { label: "Partners conectados", value: String(data.partners.length) },
-        { label: "Clientes com status ativo", value: String(data.clients.filter((item) => item.status === "ACTIVE").length) },
-        { label: "Oportunidades ganhas", value: String(data.opportunities.filter((item) => item.stage === "WON").length) },
+        {
+          label: "Clientes com status ativo",
+          value: String(data.clients.filter((item) => item.status === "ACTIVE").length),
+        },
+        {
+          label: "Oportunidades ganhas",
+          value: String(data.opportunities.filter((item) => item.stage === "WON").length),
+        },
       ],
     };
   }
@@ -245,7 +323,10 @@ export function buildPortalSnapshot(portalKey: PortalKey, data: DashboardData): 
       ],
       quickFacts: [
         { label: "Clientes carregados", value: String(data.clients.length) },
-        { label: "Vendas concluídas", value: String(data.sales.filter((item) => item.status === "BILLED").length) },
+        {
+          label: "Vendas concluídas",
+          value: String(data.sales.filter((item) => item.status === "BILLED").length),
+        },
         { label: "Catálogos ativos", value: String(activeCatalogs.length) },
       ],
     };
@@ -256,12 +337,12 @@ export function buildPortalSnapshot(portalKey: PortalKey, data: DashboardData): 
       {
         label: "Ecossistema ativo",
         value: `${data.operators.length} / ${data.partners.length}`,
-        description: "Operadoras e partners visíveis na camada administrativa.",
+        description: "Operadoras e partners visíveis na camada Expand.",
       },
       {
         label: "Clientes monitorados",
         value: String(data.clients.length),
-        description: "Base de relacionamento disponível para gestão administrativa.",
+        description: "Base de relacionamento disponível para gestão executiva.",
       },
       {
         label: "Receita bruta",

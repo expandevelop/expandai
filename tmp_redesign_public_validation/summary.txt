@@ -1,0 +1,24 @@
+ExpandAI Frontend Redesign Public Validation
+==========================================
+
+Published endpoint: http://34.73.25.196:3000
+Published build id: tzge3-CfRHNSHhWskLXgf
+
+Validated routes (HTTP 200):
+- /
+- /expand
+- /expand/relatorios
+- /operadora
+- /operadora/relatorios
+- /partner
+- /partner/relatorios
+- /cliente
+- /cliente/relatorios
+- /clientes
+- /admin
+- /admin/relatorios
+
+Operational notes:
+- The redesign was restored in production after host restart.
+- The persistent host required a 2 GB swapfile to stabilize build and deployment operations.
+- The final production build was restored from the locally validated artifact by chunked transfer to the persistent host.

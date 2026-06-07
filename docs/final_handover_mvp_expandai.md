@@ -20,8 +20,9 @@ O backend publicado permanece como o núcleo transacional do sistema e responde 
 | Partners | Onboarding administrativo e página de detalhe | Concluído |
 | Clientes | Listagem dedicada e página de detalhe operacional | Concluído e validado em produção |
 | Publicação web | Frontend em ambiente persistente com `systemd` no cloud computer | Concluído e validado em produção |
-| Portais por perfil | Hub principal e experiências dedicadas para administrativo, partner e cliente | Concluído |
+| Portais por perfil | Hub principal e experiências dedicadas para Expand, Operadora, Partner e Cliente Final | Concluído |
 | Relatórios web | Superfícies analíticas iniciais por perfil com navegação dedicada | Concluído |
+| Redesign visual | Nova base visual clara, acessível e orientada a teste de usabilidade | Concluído e validado em produção |
 | QA integrada | Smoke test do MVP, validação de rotas, login, refresh e proteção por token | Concluído |
 
 ## URLs e ambientes relevantes
@@ -49,6 +50,10 @@ A reta final do MVP foi consolidada em checkpoints sequenciais, cada um com docu
 | 18 | Auditoria de UX e segmentação da experiência | Publicado |
 | 19 | Arquitetura dos portais por perfil | Publicado |
 | 20 | Portais, dashboards, relatórios e preparação para teste de usabilidade | Publicado |
+| 21 | Auditoria crítica do front-end e problemas de UX | Documentado |
+| 22 | Arquitetura do redesign com quatro portais separados | Documentado |
+| 23 | Execução do redesign visual e validação local | Documentado |
+| 24 | Publicação do redesign em produção e estabilização do host persistente | Publicado |
 
 ## Commits-chave da reta final
 
@@ -61,7 +66,8 @@ A reta final do MVP foi consolidada em checkpoints sequenciais, cada um com docu
 | `fb84e02` | Cobertura web do módulo de clientes |
 | `bcb21ea` | Documentação da validação integrada e hardening final |
 | `ecd6de4` | Fechamento operacional final do deploy persistente |
-| próximo commit desta etapa | Portais por perfil, dashboards, relatórios e experiência pronta para teste de usabilidade |
+| `105cb0f` | Portais por perfil, dashboards, relatórios e experiência pronta para teste de usabilidade |
+| próximo commit desta etapa | Publicação do redesign em produção, restauração da build validada e estabilização do host persistente |
 
 ## Evidências de validação do MVP
 
@@ -72,6 +78,10 @@ A validação final confirmou que a API pública e o frontend persistente public
 | Frontend publicado funcional `/` | `200` em `http://34.73.25.196:3000/` |
 | Frontend publicado funcional `/admin` | `200` em `http://34.73.25.196:3000/admin` |
 | Frontend publicado funcional `/admin/relatorios` | `200` em `http://34.73.25.196:3000/admin/relatorios` |
+| Frontend publicado redesenhado `/expand` | `200` em `http://34.73.25.196:3000/expand` |
+| Frontend publicado redesenhado `/expand/relatorios` | `200` em `http://34.73.25.196:3000/expand/relatorios` |
+| Frontend publicado redesenhado `/operadora` | `200` em `http://34.73.25.196:3000/operadora` |
+| Frontend publicado redesenhado `/operadora/relatorios` | `200` em `http://34.73.25.196:3000/operadora/relatorios` |
 | Frontend publicado funcional `/partner` | `200` em `http://34.73.25.196:3000/partner` |
 | Frontend publicado funcional `/partner/relatorios` | `200` em `http://34.73.25.196:3000/partner/relatorios` |
 | Frontend publicado funcional `/cliente` | `200` em `http://34.73.25.196:3000/cliente` |
@@ -101,12 +111,20 @@ Os artefatos de apoio dessa validação permanecem no repositório local durante
 | Auditoria de UX | `docs/status_checkpoint_18_auditoria_ux_segmentacao.md` |
 | Arquitetura dos portais | `docs/status_checkpoint_19_arquitetura_portais_ux.md` |
 | Publicação dos portais e relatórios | `docs/status_checkpoint_20_portais_ux_dashboards_relatorios.md` |
+| Auditoria do redesign | `docs/status_checkpoint_21_auditoria_redesign_expand_portais.md` |
+| Arquitetura do redesign | `docs/status_checkpoint_22_arquitetura_redesign_expand_portais.md` |
+| Execução do redesign | `docs/status_checkpoint_23_redesign_expand_portais_execucao.md` |
+| Validação local do redesign | `tmp_redesign_validation/summary.txt` |
+| Publicação do redesign em produção | `docs/status_checkpoint_24_publicacao_redesign_producao.md` |
+| Validação pública do redesign | `tmp_redesign_public_validation/summary.txt` |
 
 ## Fechamento operacional definitivo
 
 A pendência operacional residual do frontend persistente foi resolvida no checkpoint final de deploy. O diagnóstico conclusivo identificou que o serviço `expandai-web` falhava porque a build remota do Next.js estava inconsistente e sem o arquivo `.next/BUILD_ID`, impedindo o `next start` de localizar uma build válida de produção.
 
-A correção aplicada consistiu em interromper o serviço, reconstruir integralmente o frontend em `/home/ubuntu/expandai/apps/web`, confirmar a geração do `BUILD_ID` e reiniciar a unidade `expandai-web.service`. Após essa intervenção, o serviço voltou ao estado **active (running)** e o frontend publicado passou a responder corretamente. Em seguida, a camada web foi evoluída com portais por perfil, dashboards, relatórios e nova experiência visual, sendo republicada com sucesso no mesmo host persistente.
+A correção aplicada inicialmente consistiu em interromper o serviço, reconstruir integralmente o frontend em `/home/ubuntu/expandai/apps/web`, confirmar a geração do `BUILD_ID` e reiniciar a unidade `expandai-web.service`. Após essa intervenção, o serviço voltou ao estado **active (running)** e o frontend publicado passou a responder corretamente. Em seguida, a camada web foi evoluída com portais por perfil, dashboards, relatórios e nova experiência visual.
+
+Na publicação do redesign, houve nova instabilidade operacional no host persistente, exigindo reinício da máquina, ativação de **swap persistente de 2 GB** e restauração da build validada a partir do artefato local transferido em partes menores. Com isso, o frontend redesenhado foi restabelecido em produção e voltou a responder corretamente no endpoint público funcional.
 
 > Em outras palavras, o **MVP está concluído em código, build e operação persistente**, e a camada web já entrou em uma etapa superior de maturidade visual para testes de usabilidade, com endpoint funcional público validado em `http://34.73.25.196:3000`.
 
@@ -114,6 +132,6 @@ A correção aplicada consistiu em interromper o serviço, reconstruir integralm
 
 O projeto **ExpandAI** encerra este ciclo com um **MVP operacional funcional**, autenticado, modular e efetivamente publicado. O conjunto principal de módulos foi implementado, a API responde com segurança adequada para o escopo do MVP, a camada web foi estabilizada em ambiente persistente e a validação final confirmou o comportamento esperado dos fluxos centrais em produção.
 
-Além disso, a experiência web já foi elevada para um estágio mais apropriado de avaliação de produto, com **hub principal**, **portais separados por perfil**, **dashboards modernos**, **relatórios dedicados** e **modais reutilizáveis** prontos para testes de usabilidade.
+Além disso, a experiência web já foi elevada para um estágio mais apropriado de avaliação de produto, com **hub principal**, **quatro portais separados por link**, **dashboards modernos**, **relatórios dedicados**, **modais contextuais por portal** e uma base visual mais clara para testes de usabilidade.
 
-Com a recuperação do deploy persistente, a disponibilização pública do módulo de clientes e a publicação da nova camada de portais, o desenvolvimento e o fechamento operacional desta fase podem ser considerados **integralmente concluídos**.
+Com a recuperação do deploy persistente, a disponibilização pública do módulo de clientes, a publicação da nova camada de portais e a estabilização da publicação do redesign em produção, o desenvolvimento e o fechamento operacional desta fase podem ser considerados **integralmente concluídos**.

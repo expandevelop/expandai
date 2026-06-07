@@ -1,0 +1,23 @@
+ExpandAI Frontend Redesign Validation
+===================================
+
+Build status: SUCCESS
+Build log: /tmp/expandai_redesign_build.log
+Local production server: http://127.0.0.1:3020
+
+Validated routes (HTTP 200):
+- /
+- /expand
+- /expand/relatorios
+- /operadora
+- /operadora/relatorios
+- /partner
+- /partner/relatorios
+- /cliente
+- /cliente/relatorios
+- /clientes
+
+Notes:
+- The redesign compiles successfully in production mode.
+- The new portal taxonomy is active with four dedicated entry points: Expand, Operadora, Partner and Cliente Final.
+- Legacy administrative routes remain compatible through the new Expand portal wrappers.
