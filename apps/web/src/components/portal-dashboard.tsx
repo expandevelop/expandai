@@ -41,10 +41,10 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-500">Carregando portal {portal.badge.toLowerCase()}...</p>
-        </div>
+      <main className="relative flex min-h-screen items-center justify-center bg-[#0D1E2D] text-[#CDD6DC]">
+        <p className="text-sm text-[#8A9AA6]">
+          Carregando portal {portal.badge.toLowerCase()}...
+        </p>
       </main>
     );
   }
@@ -64,7 +64,7 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
         actionSlot={[
           <button
             key="prioridades"
-            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+            className="inline-flex rounded-xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20 hover:text-white"
             onClick={() => setActiveModal("prioridades")}
             type="button"
           >
@@ -72,7 +72,7 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
           </button>,
           <button
             key="apps"
-            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+            className="inline-flex rounded-xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20 hover:text-white"
             onClick={() => setActiveModal("apps")}
             type="button"
           >
@@ -81,14 +81,14 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
           <Link
             key="relatorios"
             href={portal.reportsRoute}
-            className="inline-flex rounded-2xl border border-[#16a34a]/20 bg-[#16a34a]/10 px-4 py-3 text-sm font-medium text-[#0f5132] transition hover:bg-[#16a34a]/15"
+            className="inline-flex rounded-xl bg-[#FF842A] px-4 py-3 text-sm font-medium text-white shadow-lg shadow-[#FF842A]/30 transition hover:bg-[#E06D1B]"
           >
             Ver relatórios
           </Link>,
         ]}
       >
         {error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
             {error}
           </div>
         ) : null}
@@ -166,10 +166,10 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
       >
         <div className="space-y-4">
           {snapshot.reportRows.map((row) => (
-            <div key={row.label} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{row.label}</p>
-              <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{row.primary}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{row.secondary}</p>
+            <div key={row.label} className="rounded-2xl border border-white/8 bg-[#07131F]/50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8A9AA6]">{row.label}</p>
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-white">{row.primary}</p>
+              <p className="mt-2 text-sm leading-6 text-[#8A9AA6]">{row.secondary}</p>
             </div>
           ))}
         </div>
@@ -187,11 +187,11 @@ export function PortalDashboard({ portalKey }: PortalDashboardProps) {
             <Link
               key={module.href}
               href={module.href}
-              className="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-slate-300 hover:bg-white"
+              className="rounded-2xl border border-white/8 bg-[#07131F]/50 p-5 transition hover:border-white/20"
             >
-              <p className="text-lg font-semibold text-slate-950">{module.label}</p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{module.description}</p>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#16a34a]">Abrir módulo</p>
+              <p className="text-lg font-semibold text-white">{module.label}</p>
+              <p className="mt-3 text-sm leading-6 text-[#8A9AA6]">{module.description}</p>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#FF842A]">Abrir módulo</p>
             </Link>
           ))}
         </div>

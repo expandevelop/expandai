@@ -91,9 +91,9 @@ export default function OperatorsPage() {
 
   if (isBooting || !isReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="min-h-screen bg-[#0D1E2D] text-[#CDD6DC]">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-300">Carregando operadoras...</p>
+          <p className="text-sm text-[#8A9AA6]">Carregando operadoras...</p>
         </div>
       </main>
     );
@@ -188,7 +188,7 @@ export default function OperatorsPage() {
                 </form>
               </FormCard>
             ) : (
-              <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+              <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                 <SectionHeader
                   eyebrow="Leitura operacional"
                   title="Onboarding administrativo restrito"
@@ -197,7 +197,7 @@ export default function OperatorsPage() {
               </section>
             )}
 
-            <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+            <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <SectionHeader
                   eyebrow="Lista operacional"
@@ -205,7 +205,7 @@ export default function OperatorsPage() {
                   description="Cada registro agora já possui atalho para leitura aprofundada da entidade, incluindo usuário vinculado, onboardings e produtos associados."
                 />
                 <button
-                  className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => void reload()}
                   disabled={isLoading}
                   type="button"
@@ -219,17 +219,17 @@ export default function OperatorsPage() {
                   {data.operators.map((operator) => (
                     <article
                       key={operator.id}
-                      className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5"
+                      className="rounded-2xl border border-white/8 bg-[#07131F]/60 p-5"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h3 className="text-lg font-semibold text-white">{operator.tradeName}</h3>
-                          <p className="mt-2 text-sm text-slate-400">{operator.legalName}</p>
+                          <p className="mt-2 text-sm text-[#8A9AA6]">{operator.legalName}</p>
                         </div>
                         <StatusBadge value={operator.status} />
                       </div>
 
-                      <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2 xl:grid-cols-4">
+                      <div className="mt-4 grid gap-3 text-sm text-[#8A9AA6] md:grid-cols-2 xl:grid-cols-4">
                         <p>Documento: {operator.document ?? "—"}</p>
                         <p>E-mail: {operator.email ?? "—"}</p>
                         <p>Telefone: {operator.phone ?? "—"}</p>
@@ -239,7 +239,7 @@ export default function OperatorsPage() {
                       <div className="mt-5 flex flex-wrap gap-3">
                         <Link
                           href={`/operadoras/${operator.id}`}
-                          className="inline-flex rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm font-medium text-violet-100 transition hover:bg-violet-500/20"
+                          className="inline-flex rounded-2xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20"
                         >
                           Abrir detalhe
                         </Link>

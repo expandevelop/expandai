@@ -57,9 +57,9 @@ export default function ClientDetailPage() {
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="min-h-screen bg-[#0D1E2D] text-[#CDD6DC]">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-300">Carregando cliente...</p>
+          <p className="text-sm text-[#8A9AA6]">Carregando cliente...</p>
         </div>
       </main>
     );
@@ -85,12 +85,12 @@ export default function ClientDetailPage() {
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <Link
               href="/clientes"
-              className="inline-flex rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+              className="inline-flex rounded-2xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20"
             >
               Voltar para clientes
             </Link>
             <button
-              className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
               type="button"
               onClick={() => void loadClient()}
               disabled={isLoading}
@@ -122,7 +122,7 @@ export default function ClientDetailPage() {
               </section>
 
               <div className="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-                <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+                <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <SectionHeader
                       eyebrow="Cadastro principal"
@@ -132,7 +132,7 @@ export default function ClientDetailPage() {
                     <StatusBadge value={client.status} />
                   </div>
 
-                  <div className="mt-6 grid gap-4 text-sm text-slate-300 md:grid-cols-2">
+                  <div className="mt-6 grid gap-4 text-sm text-[#8A9AA6] md:grid-cols-2">
                     <p>Documento: {client.document ?? "—"}</p>
                     <p>E-mail: {client.email ?? client.user?.email ?? "—"}</p>
                     <p>Telefone: {client.phone ?? "—"}</p>
@@ -141,11 +141,11 @@ export default function ClientDetailPage() {
                     <p>ID da entidade: {client.id}</p>
                   </div>
 
-                  <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  <div className="mt-8 rounded-2xl border border-white/8 bg-[#07131F]/60 p-5">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8A9AA6]">
                       Conta vinculada
                     </h3>
-                    <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+                    <div className="mt-4 grid gap-3 text-sm text-[#8A9AA6] md:grid-cols-2">
                       <p>Usuário: {client.user?.name ?? "—"}</p>
                       <p>E-mail: {client.user?.email ?? "—"}</p>
                       <p>Perfil: {client.user?.role ?? "—"}</p>
@@ -154,7 +154,7 @@ export default function ClientDetailPage() {
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+                <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                   <SectionHeader
                     eyebrow="Histórico administrativo"
                     title="Registros de onboarding"
@@ -165,7 +165,7 @@ export default function ClientDetailPage() {
                       client.onboardings.map((onboarding) => (
                         <div
                           key={onboarding.id}
-                          className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300"
+                          className="rounded-2xl border border-white/8 bg-[#07131F]/60 p-4 text-sm text-[#8A9AA6]"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <p className="font-medium text-white">{onboarding.actorType}</p>
@@ -176,7 +176,7 @@ export default function ClientDetailPage() {
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-[#8A9AA6]">
                         Nenhum onboarding vinculado foi encontrado para este cliente.
                       </p>
                     )}

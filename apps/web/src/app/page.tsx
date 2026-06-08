@@ -4,16 +4,19 @@ import Link from "next/link";
 import { LoginScreen } from "@/components/login-screen";
 import { useAuth } from "@/components/auth-provider";
 import { getDefaultPortalForRole, orderedPortals } from "@/lib/portal-config";
+import { ExpandAiLogo, MeshBackground } from "@/components/ui/brand";
+import { UserMenuStandalone } from "@/components/ui/user-menu";
 
 export default function Home() {
   const { isBooting, session, currentUser } = useAuth();
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-500">Carregando a experiência ExpandAI...</p>
-        </div>
+      <main className="relative flex min-h-screen items-center justify-center bg-[#0D1E2D] text-[#CDD6DC]">
+        <MeshBackground />
+        <p className="relative z-10 text-sm text-[#8A9AA6]">
+          Carregando a experiência ExpandAI...
+        </p>
       </main>
     );
   }
@@ -25,86 +28,78 @@ export default function Home() {
   const defaultPortal = getDefaultPortalForRole(currentUser.role);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] text-slate-900">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <header className="overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,29,47,0.06)]">
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#0f1d2f] via-[#1e3a5f] to-[#16a34a]" />
-          <div className="grid gap-8 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-[#16a34a]">Expand AI</p>
-              <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 lg:text-5xl">
-                Uma entrada mais limpa para cada público da plataforma
-              </h1>
-              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600">
-                A experiência foi reorganizada para separar claramente os acessos de Expand, Operadora, Partner e Cliente Final, com menos ruído visual, mais hierarquia e navegação mais previsível.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href={defaultPortal.route}
-                  className="inline-flex rounded-2xl border border-[#16a34a]/20 bg-[#16a34a]/10 px-5 py-3 text-sm font-semibold text-[#0f5132] transition hover:bg-[#16a34a]/15"
-                >
-                  Abrir meu portal principal
-                </Link>
-                <Link
-                  href={defaultPortal.reportsRoute}
-                  className="inline-flex rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
-                >
-                  Ver relatórios do meu perfil
-                </Link>
-              </div>
-            </div>
+    <main className="relative min-h-screen overflow-hidden bg-[#0D1E2D] text-[#CDD6DC] antialiased">
+      <MeshBackground />
 
-            <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Sessão autenticada</p>
-              <p className="mt-4 text-xl font-semibold text-slate-950">{currentUser.name}</p>
-              <p className="mt-2 text-sm text-slate-600">{currentUser.email}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <span className="rounded-full border border-[#16a34a]/20 bg-[#16a34a]/10 px-3 py-1 text-xs font-medium text-[#0f5132]">
-                  {currentUser.role}
-                </span>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
-                  {currentUser.ecosystemProfile ?? "perfil não definido"}
-                </span>
-              </div>
-              <div className="mt-6 rounded-3xl bg-white p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Acesso recomendado</p>
-                <h2 className="mt-3 text-xl font-semibold text-slate-950">{defaultPortal.title}</h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{defaultPortal.description}</p>
-              </div>
-            </div>
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-6 lg:px-8">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#162A3D]/30 px-4 py-3 backdrop-blur-md">
+            <ExpandAiLogo className="text-3xl" />
           </div>
-        </header>
+          <UserMenuStandalone
+            name={currentUser.name}
+            email={currentUser.email}
+            role={currentUser.role}
+          />
+        </div>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+        {/* Hero */}
+        <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-8 backdrop-blur-xl lg:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#FF842A]">
+            Bem-vindo de volta
+          </p>
+          <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white lg:text-4xl">
+            Olá, {currentUser.name.split(" ")[0]}. Sua operação começa aqui.
+          </h1>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-[#8A9AA6]">
+            Cada público tem um portal dedicado, com leitura objetiva e navegação
+            previsível. Acesse seu portal principal ou os relatórios do seu perfil.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link
+              href={defaultPortal.route}
+              className="inline-flex rounded-xl bg-[#FF842A] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#FF842A]/30 transition hover:bg-[#E06D1B]"
+            >
+              Abrir {defaultPortal.title}
+            </Link>
+            <Link
+              href={defaultPortal.reportsRoute}
+              className="inline-flex rounded-xl border border-white/10 bg-[#07131F]/60 px-5 py-3 text-sm font-semibold text-[#CDD6DC] transition hover:border-white/20 hover:text-white"
+            >
+              Ver relatórios do meu perfil
+            </Link>
+          </div>
+        </section>
+
+        {/* Portais */}
+        <section className="grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
           {orderedPortals.map((portal) => (
             <article
               key={portal.key}
-              className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(15,29,47,0.05)]"
+              className="group relative overflow-hidden rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6 backdrop-blur-xl transition duration-300 hover:border-white/15"
             >
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0f1d2f] via-[#1e3a5f] to-[#16a34a] text-sm font-semibold tracking-[0.16em] text-white">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF842A]/12 text-sm font-semibold tracking-[0.12em] text-[#FF842A] ring-1 ring-[#FF842A]/20">
                 {portal.icon}
               </div>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-[#16a34a]">{portal.badge}</p>
-              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{portal.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{portal.description}</p>
-              <div className="mt-6 space-y-3">
-                {portal.legacyModules.slice(0, 2).map((module) => (
-                  <div key={module.href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-sm font-semibold text-slate-950">{module.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{module.description}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 flex flex-wrap gap-3">
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#FF842A]">
+                {portal.badge}
+              </p>
+              <h3 className="mt-2 text-xl font-semibold tracking-tight text-white">
+                {portal.title}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-[#8A9AA6]">
+                {portal.description}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
                 <Link
                   href={portal.route}
-                  className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+                  className="inline-flex rounded-xl border border-white/10 bg-[#07131F]/60 px-4 py-2.5 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20 hover:text-white"
                 >
                   Dashboard
                 </Link>
                 <Link
                   href={portal.reportsRoute}
-                  className="inline-flex rounded-2xl border border-[#16a34a]/20 bg-[#16a34a]/10 px-4 py-3 text-sm font-semibold text-[#0f5132] transition hover:bg-[#16a34a]/15"
+                  className="inline-flex rounded-xl border border-[#FF842A]/25 bg-[#FF842A]/10 px-4 py-2.5 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20"
                 >
                   Relatórios
                 </Link>

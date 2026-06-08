@@ -31,10 +31,8 @@ export function PortalReports({ portalKey }: PortalReportsProps) {
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-500">Carregando relatórios do portal...</p>
-        </div>
+      <main className="relative flex min-h-screen items-center justify-center bg-[#0D1E2D] text-[#CDD6DC]">
+        <p className="text-sm text-[#8A9AA6]">Carregando relatórios do portal...</p>
       </main>
     );
   }
@@ -55,7 +53,7 @@ export function PortalReports({ portalKey }: PortalReportsProps) {
           <button
             key="metodologia"
             type="button"
-            className="inline-flex rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+            className="inline-flex rounded-xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20 hover:text-white"
             onClick={() => setIsMethodologyOpen(true)}
           >
             Ver metodologia
@@ -63,14 +61,14 @@ export function PortalReports({ portalKey }: PortalReportsProps) {
           <Link
             key="dashboard"
             href={portal.route}
-            className="inline-flex rounded-2xl border border-[#16a34a]/20 bg-[#16a34a]/10 px-4 py-3 text-sm font-medium text-[#0f5132] transition hover:bg-[#16a34a]/15"
+            className="inline-flex rounded-xl bg-[#FF842A] px-4 py-3 text-sm font-medium text-white shadow-lg shadow-[#FF842A]/30 transition hover:bg-[#E06D1B]"
           >
             Voltar ao dashboard
           </Link>,
         ]}
       >
         {error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
             {error}
           </div>
         ) : null}
@@ -117,9 +115,9 @@ export function PortalReports({ portalKey }: PortalReportsProps) {
           >
             <div className="space-y-4">
               {snapshot.quickFacts.map((fact) => (
-                <article key={fact.label} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{fact.label}</p>
-                  <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{fact.value}</p>
+                <article key={fact.label} className="rounded-2xl border border-white/8 bg-[#07131F]/50 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8A9AA6]">{fact.label}</p>
+                  <p className="mt-3 text-2xl font-semibold tracking-tight text-white">{fact.value}</p>
                 </article>
               ))}
             </div>
@@ -134,7 +132,7 @@ export function PortalReports({ portalKey }: PortalReportsProps) {
         onClose={() => setIsMethodologyOpen(false)}
         portalLabel={portal.title}
       >
-        <div className="space-y-4 text-sm leading-7 text-slate-600">
+        <div className="space-y-4 text-sm leading-7 text-[#8A9AA6]">
           <p>
             As métricas resumem apenas os registros carregados pela sessão autenticada e pelo escopo visível ao perfil atual.
           </p>

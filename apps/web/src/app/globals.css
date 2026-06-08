@@ -1,25 +1,50 @@
 @import "tailwindcss";
 
+/* =========================================================================
+ * ExpandAI — Design System (paleta oficial)
+ * ===================================================================== */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --border: #e2e8f0;
-  --brand-navy-900: #0f1d2f;
-  --brand-navy-800: #1e3a5f;
-  --brand-green-600: #16a34a;
-  --brand-green-500: #22c55e;
-  --text-muted: #475569;
-  --text-soft: #64748b;
-  --ring: rgba(22, 163, 74, 0.35);
+  /* Estrutura / superfícies */
+  --canvas: #0d1e2d; /* background escuro principal */
+  --surface: #162a3d; /* cards / superfície secundária */
+  --surface-deep: #07131f; /* superfície profunda */
+
+  /* Ação & CTA (laranja) */
+  --cta: #ff842a;
+  --cta-hover: #e06d1b;
+  --cta-tint: #fff2e8;
+
+  /* Semântica & destaque (verde) */
+  --accent: #0e9a4f;
+  --accent-light: #13b860;
+
+  /* Erro / perigo (complemento à paleta — vencido, cancelado) */
+  --danger: #e5484d;
+
+  /* Tipografia & neutros */
+  --text-primary: #ffffff;
+  --text-secondary: #cdd6dc;
+  --text-muted: #8a9aa6;
+
+  /* Compat (mantém vars antigas apontando para a nova base) */
+  --background: var(--canvas);
+  --foreground: var(--text-secondary);
+  --border: rgba(255, 255, 255, 0.08);
+  --ring: rgba(255, 132, 42, 0.4);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--canvas);
+  --color-foreground: var(--text-secondary);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-deep: var(--surface-deep);
+  --color-cta: var(--cta);
+  --color-cta-hover: var(--cta-hover);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter);
 }
 
 * {
@@ -32,17 +57,14 @@ html {
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 28%),
-    radial-gradient(circle at top left, rgba(30, 58, 95, 0.06), transparent 24%),
-    linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--text-secondary);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 ::selection {
-  background: rgba(22, 163, 74, 0.18);
-  color: #0f172a;
+  background: rgba(255, 132, 42, 0.25);
+  color: #ffffff;
 }
 
 a {
@@ -72,7 +94,31 @@ button:disabled {
 
 input::placeholder,
 textarea::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted);
+}
+
+/* =========================================================================
+ * Animações do design system
+ * ===================================================================== */
+
+/* Mesh background flutuante (glow de marca) */
+@keyframes float1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, 40px) scale(1.08); }
+}
+@keyframes float2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-50px, 50px) scale(1.12); }
+}
+@keyframes float3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -50px) scale(1.06); }
+}
+
+/* Toast */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {

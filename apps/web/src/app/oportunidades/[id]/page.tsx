@@ -166,9 +166,9 @@ export default function OpportunityDetailPage() {
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="min-h-screen bg-[#0D1E2D] text-[#CDD6DC]">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-300">Carregando oportunidade...</p>
+          <p className="text-sm text-[#8A9AA6]">Carregando oportunidade...</p>
         </div>
       </main>
     );
@@ -194,12 +194,12 @@ export default function OpportunityDetailPage() {
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <Link
               href="/oportunidades"
-              className="inline-flex rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+              className="inline-flex rounded-2xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20"
             >
               Voltar para oportunidades
             </Link>
             <button
-              className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
               type="button"
               onClick={() => void loadOpportunity()}
               disabled={isLoading}
@@ -232,7 +232,7 @@ export default function OpportunityDetailPage() {
               </section>
 
               <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+                <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <SectionHeader
                       eyebrow="Resumo do registro"
@@ -242,7 +242,7 @@ export default function OpportunityDetailPage() {
                     <StatusBadge value={opportunity.stage} />
                   </div>
 
-                  <div className="mt-6 grid gap-4 text-sm text-slate-300 md:grid-cols-2">
+                  <div className="mt-6 grid gap-4 text-sm text-[#8A9AA6] md:grid-cols-2">
                     <p>Operadora: {opportunity.operator?.tradeName ?? "—"}</p>
                     <p>Partner: {opportunity.partner?.companyName ?? "—"}</p>
                     <p>Cliente: {opportunity.client?.companyName ?? opportunity.client?.tradeName ?? "—"}</p>
@@ -254,7 +254,7 @@ export default function OpportunityDetailPage() {
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+                <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                   <SectionHeader
                     eyebrow="Ações rápidas"
                     title="Progressão do pipeline"
@@ -270,7 +270,7 @@ export default function OpportunityDetailPage() {
                     />
                     <div className="flex flex-wrap gap-3">
                       <button
-                        className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
                         type="button"
                         onClick={() => void handleStageUpdate()}
                         disabled={isMutating || stageDraft === opportunity.stage}
@@ -278,7 +278,7 @@ export default function OpportunityDetailPage() {
                         {isMutating ? "Aplicando..." : "Aplicar estágio"}
                       </button>
                       <button
-                        className="inline-flex rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex rounded-2xl border border-[#0E9A4F]/30 bg-[#0E9A4F]/10 px-4 py-3 text-sm font-medium text-[#13B860] transition hover:bg-[#13B860]/20 disabled:cursor-not-allowed disabled:opacity-60"
                         type="button"
                         onClick={() => void handleMarkAsWon()}
                         disabled={isMutating || opportunity.stage === "WON"}

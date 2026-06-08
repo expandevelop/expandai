@@ -316,9 +316,9 @@ export default function OpportunitiesPage() {
 
   if (isBooting || !isReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="min-h-screen bg-[#0D1E2D] text-[#CDD6DC]">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-300">Carregando oportunidades...</p>
+          <p className="text-sm text-[#8A9AA6]">Carregando oportunidades...</p>
         </div>
       </main>
     );
@@ -441,7 +441,7 @@ export default function OpportunitiesPage() {
                 </form>
               </FormCard>
 
-              <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+              <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                   <SectionHeader
                     eyebrow="Lista de oportunidades"
@@ -449,7 +449,7 @@ export default function OpportunitiesPage() {
                     description="A visão abaixo mantém busca textual, refinamento por estágio e mutações autenticadas do pipeline, agora com atalho para carregar registros no formulário."
                   />
                   <button
-                    className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => void reload()}
                     disabled={isLoading}
                     type="button"
@@ -491,18 +491,18 @@ export default function OpportunitiesPage() {
                       return (
                         <article
                           key={opportunity.id}
-                          className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5"
+                          className="rounded-2xl border border-white/8 bg-[#07131F]/60 p-5"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <h3 className="text-lg font-semibold text-white">{opportunity.title}</h3>
-                              <p className="mt-2 text-sm leading-6 text-slate-400">
+                              <p className="mt-2 text-sm leading-6 text-[#8A9AA6]">
                                 {truncateText(opportunity.description, 180)}
                               </p>
                             </div>
                             <StatusBadge value={opportunity.stage} />
                           </div>
-                          <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2 xl:grid-cols-4">
+                          <div className="mt-4 grid gap-3 text-sm text-[#8A9AA6] md:grid-cols-2 xl:grid-cols-4">
                             <p>Operadora: {opportunity.operator?.tradeName ?? "—"}</p>
                             <p>Partner: {opportunity.partner?.companyName ?? "—"}</p>
                             <p>Produto: {opportunity.productCatalog?.name ?? "—"}</p>
@@ -511,19 +511,19 @@ export default function OpportunitiesPage() {
                             <p>Fechamento esperado: {formatCompactDate(opportunity.closeExpectedAt)}</p>
                             <p>Criada em: {formatCompactDate(opportunity.createdAt)}</p>
                           </div>
-                          <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                          <div className="mt-5 rounded-2xl border border-white/8 bg-[#162A3D]/70 p-4">
+                            <p className="text-xs uppercase tracking-[0.18em] text-[#8A9AA6]">
                               Ações operacionais
                             </p>
                             <div className="mt-3 flex flex-wrap gap-3">
                               <Link
                                 href={`/oportunidades/${opportunity.id}`}
-                                className="inline-flex rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+                                className="inline-flex rounded-2xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20"
                               >
                                 Abrir detalhe
                               </Link>
                               <button
-                                className="inline-flex rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-3 text-sm font-medium text-violet-100 transition hover:bg-violet-400/20"
+                                className="inline-flex rounded-2xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20"
                                 type="button"
                                 onClick={() => prepareOpportunityForm(opportunity)}
                               >
@@ -544,7 +544,7 @@ export default function OpportunitiesPage() {
                               />
                               <div className="flex flex-wrap items-end gap-3">
                                 <button
-                                  className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
                                   type="button"
                                   onClick={() => void handleStageUpdate(opportunity.id)}
                                   disabled={isPending || draftStage === opportunity.stage}
@@ -552,7 +552,7 @@ export default function OpportunitiesPage() {
                                   {isPending ? "Aplicando..." : "Aplicar estágio"}
                                 </button>
                                 <button
-                                  className="inline-flex rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="inline-flex rounded-2xl border border-[#0E9A4F]/30 bg-[#0E9A4F]/10 px-4 py-3 text-sm font-medium text-[#13B860] transition hover:bg-[#13B860]/20 disabled:cursor-not-allowed disabled:opacity-60"
                                   type="button"
                                   onClick={() => void handleMarkAsWon(opportunity.id)}
                                   disabled={isPending || opportunity.stage === "WON"}
@@ -590,7 +590,7 @@ export default function OpportunitiesPage() {
               title="Rascunho e coerência relacional"
               description="Os selects são carregados a partir dos módulos reais da API e o catálogo é automaticamente filtrado pela operadora selecionada."
             >
-              <div className="space-y-4 text-sm text-slate-300">
+              <div className="space-y-4 text-sm text-[#8A9AA6]">
                 <p>
                   Modo atual: <strong>{selectedOpportunityId ? "Edição" : "Criação"}</strong>
                 </p>

@@ -129,9 +129,9 @@ export default function SaleDetailPage() {
 
   if (isBooting) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100">
+      <main className="min-h-screen bg-[#0D1E2D] text-[#CDD6DC]">
         <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-          <p className="text-sm text-slate-300">Carregando venda...</p>
+          <p className="text-sm text-[#8A9AA6]">Carregando venda...</p>
         </div>
       </main>
     );
@@ -157,12 +157,12 @@ export default function SaleDetailPage() {
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <Link
               href="/vendas"
-              className="inline-flex rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+              className="inline-flex rounded-2xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20"
             >
               Voltar para vendas
             </Link>
             <button
-              className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
               type="button"
               onClick={() => void loadSale()}
               disabled={isLoading}
@@ -195,7 +195,7 @@ export default function SaleDetailPage() {
               </section>
 
               <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+                <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <SectionHeader
                       eyebrow="Resumo do registro"
@@ -205,7 +205,7 @@ export default function SaleDetailPage() {
                     <StatusBadge value={sale.status} />
                   </div>
 
-                  <div className="mt-6 grid gap-4 text-sm text-slate-300 md:grid-cols-2">
+                  <div className="mt-6 grid gap-4 text-sm text-[#8A9AA6] md:grid-cols-2">
                     <p>Operadora: {sale.operator?.tradeName ?? "—"}</p>
                     <p>Partner: {sale.partner?.companyName ?? "—"}</p>
                     <p>Cliente: {sale.client?.companyName ?? sale.client?.tradeName ?? "—"}</p>
@@ -222,7 +222,7 @@ export default function SaleDetailPage() {
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+                <section className="rounded-3xl border border-white/8 bg-[#162A3D]/70 p-6">
                   <SectionHeader
                     eyebrow="Ações rápidas"
                     title="Status e faturamento"
@@ -238,7 +238,7 @@ export default function SaleDetailPage() {
                     />
                     <div className="flex flex-wrap gap-3">
                       <button
-                        className="inline-flex rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex rounded-2xl border border-[#FF842A]/30 bg-[#FF842A]/10 px-4 py-3 text-sm font-medium text-[#FF842A] transition hover:bg-[#FF842A]/20 disabled:cursor-not-allowed disabled:opacity-60"
                         type="button"
                         onClick={() => void handleStatusUpdate()}
                         disabled={isMutating || statusDraft === sale.status}
@@ -246,7 +246,7 @@ export default function SaleDetailPage() {
                         {isMutating ? "Aplicando..." : "Atualizar status"}
                       </button>
                       <button
-                        className="inline-flex rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex rounded-2xl border border-[#0E9A4F]/30 bg-[#0E9A4F]/10 px-4 py-3 text-sm font-medium text-[#13B860] transition hover:bg-[#13B860]/20 disabled:cursor-not-allowed disabled:opacity-60"
                         type="button"
                         onClick={() => void handleSyncBillingStatus()}
                         disabled={isMutating || !sale.billingRecordId}
@@ -256,7 +256,7 @@ export default function SaleDetailPage() {
                       {sale.billingRecordId ? (
                         <Link
                           href={`/financeiro/${sale.billingRecordId}`}
-                          className="inline-flex rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm font-medium text-violet-100 transition hover:bg-violet-500/20"
+                          className="inline-flex rounded-2xl border border-white/10 bg-[#07131F]/60 px-4 py-3 text-sm font-medium text-[#CDD6DC] transition hover:border-white/20"
                         >
                           Abrir detalhe financeiro
                         </Link>
